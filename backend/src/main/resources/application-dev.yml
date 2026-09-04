@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:5432/postgres?user=postgres.bjkouoejgamqybwagnwh&password=Gouthami%2Ejchpl%40150
-    username: postgres.bjkouoejgamqybwagnwh
-    password: Gouthami%2Ejchpl%40150
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USERNAME}
+    password: ${SUPABASE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -11,8 +11,10 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+server:
+  port: 8080
 
 app:
   security:
