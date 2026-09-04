@@ -1,35 +1,18 @@
-git status# Production: every secret and connection detail comes from the environment.
-# The application refuses to start if a required variable is missing.
 spring:
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USERNAME}
+    password: ${SUPABASE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: ${DATABASE_POOL_SIZE:10}
+
   jpa:
     hibernate:
-      # Schema changes are applied by a migration tool, never by Hibernate.
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
 
-app:
-  security:
-    refresh-token:
-      # HTTPS is mandatory in production, so the refresh cookie is secure-only.
-      secure-cookie: true
-      same-site: Strict
-    # Never reveal whether an email address is registered.
-    detailed-authentication-errors: false
-
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
-
-logging:
-  level:
-    root: WARN
-    com.customreporting: INFO
+server:
+  port: ${PORT:10000}
