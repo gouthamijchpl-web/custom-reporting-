@@ -1,0 +1,35 @@
+.style-purchase-analysis-dashboard { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.style-purchase-analysis { overflow: visible; }
+.style-purchase-analysis__header { align-items: flex-end; }
+.style-purchase-analysis__heading { flex: 1 1 260px; min-width: 220px; }
+.style-purchase-analysis__filters { display: flex; flex: 0 1 auto; align-items: flex-end; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
+.style-purchase-analysis__filters label, .style-purchase-analysis__date { display: flex; flex-direction: column; gap: 5px; color: var(--text-tertiary); font-size: .6875rem; font-weight: var(--weight-medium); }
+.style-purchase-analysis__search { width: 190px; }
+.style-purchase-analysis__search .text-input { width: 100%; }
+.style-purchase-analysis__date { width: 144px; }
+.style-purchase-analysis__status { width: 175px; }
+.style-purchase-analysis__filters .text-input__control, .style-purchase-analysis__filters .select__control, .style-purchase-analysis__filters .report-date-picker__trigger { height: 36px; min-height: 36px; }
+.style-purchase-analysis__filters > .badge { flex: none; margin-bottom: 7px; }
+.style-purchase-analysis__table-wrap { max-height: 560px; }
+.style-purchase-table { min-width: 1420px; }
+.style-purchase-table thead th:first-child { left: 0; width: 125px; min-width: 125px; }
+.style-purchase-table thead th:nth-child(2) { position: sticky; left: 125px; z-index: 5; width: 185px; min-width: 185px; text-align: left; }
+.style-purchase-table thead th:nth-child(2) .category-sales-table__sort { justify-content: space-between; text-align: left; }
+.style-purchase-table thead th:nth-child(n+3):nth-child(-n+8) { width: 145px; min-width: 145px; }
+.style-purchase-table thead th:nth-child(9) { width: 170px; min-width: 170px; text-align: center; }
+.style-purchase-table thead th:nth-child(9) .category-sales-table__sort { justify-content: center; }
+.style-purchase-table thead th:nth-child(10) { width: 115px; min-width: 115px; }
+.style-purchase-table tbody th:first-child { left: 0; width: 125px; min-width: 125px; }
+.style-purchase-table tbody th:nth-child(2) { position: sticky; left: 125px; z-index: 2; width: 185px; min-width: 185px; color: var(--text-primary); text-align: left; background: var(--surface-raised); box-shadow: 1px 0 0 var(--border-subtle); font-weight: var(--weight-semibold); }
+.style-purchase-table tbody tr:hover th:nth-child(2) { background: var(--surface-hover); }
+.style-purchase-table tfoot th:first-child { left: 0; width: 125px; min-width: 125px; }
+.style-purchase-table tfoot th:nth-child(2) { position: sticky; left: 125px; z-index: 5; width: 185px; min-width: 185px; background: var(--surface-active); box-shadow: 1px 0 0 var(--border-default), 0 -2px 5px rgba(37, 66, 23, .07); }
+.style-purchase-table__status { text-align: center !important; }
+.style-purchase-status { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 3px 9px; border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-secondary); background: var(--surface-sunken); font-size: .65rem; font-weight: var(--weight-semibold); white-space: nowrap; }
+.style-purchase-status--fully-sold { color: var(--success-text); background: var(--success-surface); border-color: var(--success-border); }
+.style-purchase-status--partially-sold { color: var(--warning-text); background: var(--warning-surface); border-color: var(--warning-border); }
+.style-purchase-status--negative-stock, .style-purchase-status--missing-purchase-data { color: var(--danger-text); background: var(--danger-surface); border-color: var(--danger-border); }
+.style-purchase-analysis .category-sales__footer span:last-child { display: inline-flex; align-items: center; gap: 5px; }
+@media (max-width: 1240px) { .style-purchase-analysis__header { align-items: stretch; flex-direction: column; } .style-purchase-analysis__filters { justify-content: flex-start; flex-wrap: wrap; } }
+@media (max-width: 680px) { .style-purchase-analysis__filters > label, .style-purchase-analysis__filters > .style-purchase-analysis__date { width: calc(50% - var(--space-1)); min-width: 135px; } .style-purchase-analysis__filters > .badge { align-self: flex-end; } }
+@media (max-width: 420px) { .style-purchase-analysis__filters > label, .style-purchase-analysis__filters > .style-purchase-analysis__date { width: 100%; } }

@@ -1,0 +1,13 @@
+.module-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Lets the empty state grow into whatever height the viewport leaves over. */
+.module-page__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

@@ -1,0 +1,50 @@
+.sku-profitability-dashboard { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.sku-profitability { overflow: visible; }
+.sku-profitability__header { align-items: flex-end; }
+.sku-profitability__heading { flex: 1 1 270px; min-width: 230px; }
+.sku-profitability__filters { display: flex; flex: 0 1 auto; align-items: flex-end; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
+.sku-profitability__filters label { display: flex; flex-direction: column; gap: 5px; width: 150px; color: var(--text-tertiary); font-size: .6875rem; font-weight: var(--weight-medium); }
+.sku-profitability__filters .sku-profitability__search { width: 285px; }
+.sku-profitability__filters .text-input, .sku-profitability__filters .select { width: 100%; }
+.sku-profitability__filters .text-input__control, .sku-profitability__filters .select__control { height: 36px; min-height: 36px; }
+.sku-profitability__filters > .badge { flex: none; margin-bottom: 7px; }
+.sku-profitability__table-wrap { max-height: 590px; }
+.sku-profitability-table { min-width: 1700px; }
+.sku-profitability-table thead th:first-child, .sku-profitability-table tbody th:first-child, .sku-profitability-table tfoot th:first-child { width: 145px; min-width: 145px; }
+.sku-profitability-table thead th:nth-child(2), .sku-profitability-table tbody td:nth-child(2), .sku-profitability-table tfoot td:nth-child(2) { width: 300px; min-width: 300px; }
+.sku-profitability-table thead th:nth-child(3), .sku-profitability-table tbody td:nth-child(3), .sku-profitability-table tfoot td:nth-child(3) { width: 170px; min-width: 170px; }
+.sku-profitability-table thead th:nth-child(4), .sku-profitability-table tbody td:nth-child(4), .sku-profitability-table tfoot td:nth-child(4) { width: 125px; min-width: 125px; }
+.sku-profitability-table thead th:nth-child(n+5):nth-child(-n+10) { width: 140px; min-width: 140px; }
+.sku-profitability-table thead th:nth-child(11), .sku-profitability-table tbody td:nth-child(11), .sku-profitability-table tfoot td:nth-child(11) { width: 115px; min-width: 115px; }
+.sku-profitability-table thead th:nth-child(2) .category-sales-table__sort,
+.sku-profitability-table thead th:nth-child(3) .category-sales-table__sort,
+.sku-profitability-table thead th:nth-child(4) .category-sales-table__sort,
+.sku-profitability-table thead th:nth-child(11) .category-sales-table__sort { justify-content: space-between; text-align: left; }
+.sku-profitability-table tbody td:nth-child(2),
+.sku-profitability-table tbody td:nth-child(3),
+.sku-profitability-table tbody td:nth-child(4),
+.sku-profitability-table tbody td:nth-child(11) { text-align: left; }
+.sku-profitability-table tbody td:nth-child(2) { overflow: hidden; text-overflow: ellipsis; }
+.sku-profitability-table__positive { color: var(--success-text); font-weight: var(--weight-semibold); }
+.sku-profitability-table__missing { color: var(--warning-text); font-weight: var(--weight-semibold); }
+.sku-profitability .category-sales__footer span:last-child { display: inline-flex; align-items: center; gap: 5px; }
+.sku-profitability__footer { flex-wrap: wrap; }
+.sku-profitability__pagination { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1); }
+.sku-profitability__pagination > span { min-width: 90px; color: var(--text-secondary); text-align: center; }
+.sku-profitability__pagination .button { min-height: 28px; padding: 3px 8px; font-size: var(--text-xs); }
+
+@media (max-width: 1180px) {
+  .sku-profitability__header { align-items: stretch; flex-direction: column; }
+  .sku-profitability__filters { justify-content: flex-start; flex-wrap: wrap; }
+}
+
+@media (max-width: 720px) {
+  .sku-profitability__filters > label { width: calc(50% - var(--space-1)); min-width: 140px; }
+  .sku-profitability__filters .sku-profitability__search { width: 100%; }
+  .sku-profitability__filters > .badge { align-self: flex-end; }
+  .sku-profitability__pagination { order: 3; width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .sku-profitability__filters > label { width: 100%; }
+}

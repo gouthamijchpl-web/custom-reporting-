@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <defs>
+    <filter id="hand-glow" x="-45%" y="-40%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="0" stdDeviation="1.45" flood-color="#bef264" flood-opacity="0.62"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1.7" flood-color="#65a30d" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <path d="M11.75 16.1V5.4c0-1.6 1.12-2.82 2.6-2.82s2.6 1.22 2.6 2.82V13 9.22c0-1.33.96-2.34 2.23-2.34s2.28 1.01 2.28 2.34v4.25-2.87c0-1.28.94-2.24 2.16-2.24s2.2.96 2.2 2.24v3.77-1.94c0-1.22.9-2.15 2.1-2.15s2.15.93 2.15 2.15V19c0 5.68-3.95 9.94-9.38 9.94h-2.42c-3.64 0-6.7-1.65-8.72-4.66l-4.61-6.84c-.85-1.25-.53-2.89.69-3.7 1.15-.76 2.66-.51 3.49.59Z" fill="#365314" stroke="#bef264" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" filter="url(#hand-glow)"/>
+  <path d="M13.08 15.6V5.45c0-.77.49-1.33 1.23-1.4" fill="none" stroke="#ffffff" stroke-width="1.08" stroke-linecap="round" opacity="0.96"/>
+  <path d="M16.95 13v2.4m4.51-1.93v2.18m4.36-1.28v1.97" fill="none" stroke="#a3e635" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+</svg>

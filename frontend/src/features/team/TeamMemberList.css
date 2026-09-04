@@ -1,0 +1,148 @@
+/* Shared between both layouts. */
+.member-list__you {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------- Table (desktop) */
+
+/*
+ * The table scrolls inside this container rather than pushing the page sideways, which is
+ * what keeps the layout free of horizontal overflow between the tablet and desktop widths.
+ */
+.member-table__scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.member-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.member-table th {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  background-color: var(--surface-sunken);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.member-table td {
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.member-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.member-table tbody tr:hover td {
+  background-color: var(--surface-hover);
+}
+
+.member-table__name {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.member-table__email {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-table__muted {
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.member-table__actions {
+  width: 1%;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- Cards (mobile) */
+
+.member-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.member-card {
+  padding: var(--space-4);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.member-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.member-card__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.member-card__name {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.member-card__email {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+.member-card__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.member-card__facts dt {
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.member-card__facts dd {
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}

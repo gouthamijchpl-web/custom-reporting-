@@ -1,0 +1,40 @@
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/.gradle-enterprise/
+.mvn/timing.properties
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# ---- Environment and secrets ----
+# .env.example is committed; real environment files never are.
+.env
+.env.*
+!.env.example
+
+# ---- IDE and OS ----
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Local development database (file-backed H2)
+data/
+
+# Local mail credentials (copied from config/application.yml.example)
+backend/config/application.yml

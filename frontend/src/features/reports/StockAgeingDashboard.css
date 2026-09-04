@@ -1,0 +1,81 @@
+.stock-ageing-dashboard { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.stock-ageing-summary { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); align-items: end; gap: var(--space-4); }
+.stock-ageing-summary__heading h2 { margin-top: 2px; font-size: var(--text-lg); }
+.stock-ageing-summary__heading p { margin-top: 3px; color: var(--text-secondary); font-size: var(--text-xs); }
+.stock-ageing-summary__cards { display: grid; grid-template-columns: repeat(7, minmax(105px, 1fr)); gap: var(--space-2); }
+.stock-ageing-summary__card { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; height: 68px; padding: 10px 12px; overflow: hidden; background: color-mix(in srgb, var(--surface-raised) 97%, var(--accent-surface)); border: 1px solid var(--accent-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); }
+.stock-ageing-summary__card::before { position: absolute; top: 0; right: 0; left: 0; height: 3px; background: var(--accent-solid); content: ''; }
+.stock-ageing-summary__card span { overflow: hidden; color: var(--text-tertiary); font-size: .625rem; font-weight: var(--weight-semibold); line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.stock-ageing-summary__card strong { margin-top: 5px; font-size: 1.15rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.stock-ageing-summary__card--watch::before { background: color-mix(in srgb, var(--warning-solid) 55%, var(--accent-solid)); }
+.stock-ageing-summary__card--warning::before { background: var(--warning-solid); }
+.stock-ageing-summary__card--aged { background: color-mix(in srgb, var(--danger-surface) 25%, var(--surface-raised)); border-color: color-mix(in srgb, var(--danger-border) 58%, var(--border-default)); }
+.stock-ageing-summary__card--aged::before { background: color-mix(in srgb, var(--danger-solid) 70%, var(--warning-solid)); }
+.stock-ageing-summary__card--aged strong { color: var(--danger-text); }
+
+.stock-ageing { overflow: visible; }
+.stock-ageing__header { align-items: flex-end; }
+.stock-ageing__heading { flex: 1 1 270px; min-width: 225px; }
+.stock-ageing__filters { display: flex; flex: 0 1 auto; align-items: flex-end; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+.stock-ageing__filters label { display: flex; flex-direction: column; gap: 5px; width: 155px; color: var(--text-tertiary); font-size: .6875rem; font-weight: var(--weight-medium); }
+.stock-ageing__filters .stock-ageing__date { width: 190px; }
+.stock-ageing__filters .stock-ageing__search { width: 230px; }
+.stock-ageing__filters .text-input, .stock-ageing__filters .select { width: 100%; }
+.stock-ageing__filters .text-input__control, .stock-ageing__filters .select__control, .stock-ageing__filters .report-date-picker__trigger { height: 36px; min-height: 36px; }
+.stock-ageing__filters > .badge { flex: none; margin-bottom: 7px; }
+.stock-ageing__table-wrap { max-height: 590px; }
+.stock-ageing-table { min-width: 1650px; }
+.stock-ageing-table thead th:first-child,
+.stock-ageing-table tbody th:first-child,
+.stock-ageing-table tfoot th:first-child { width: 165px; min-width: 165px; }
+.stock-ageing-table thead th:nth-child(2),
+.stock-ageing-table tbody td:nth-child(2),
+.stock-ageing-table tfoot td:nth-child(2) { width: 275px; min-width: 275px; }
+.stock-ageing-table thead th:nth-child(3),
+.stock-ageing-table tbody td:nth-child(3),
+.stock-ageing-table tfoot td:nth-child(3) { width: 140px; min-width: 140px; }
+.stock-ageing-table thead th:nth-child(4),
+.stock-ageing-table tbody td:nth-child(4),
+.stock-ageing-table tfoot td:nth-child(4) { width: 175px; min-width: 175px; }
+.stock-ageing-table thead th:nth-child(n+5),
+.stock-ageing-table tbody td:nth-child(n+5),
+.stock-ageing-table tfoot td:nth-child(n+5) { width: 145px; min-width: 145px; }
+.stock-ageing-table thead th:nth-child(2) .category-sales-table__sort,
+.stock-ageing-table thead th:nth-child(3) .category-sales-table__sort,
+.stock-ageing-table thead th:nth-child(4) .category-sales-table__sort { justify-content: space-between; text-align: left; }
+.stock-ageing-table tbody td:nth-child(2),
+.stock-ageing-table tbody td:nth-child(3),
+.stock-ageing-table tbody td:nth-child(4) { text-align: left; }
+.stock-ageing-table tbody td:nth-child(2) { overflow: hidden; text-overflow: ellipsis; }
+.stock-ageing-table tbody th > span { overflow: hidden; text-overflow: ellipsis; }
+.stock-ageing-table tbody th:has(svg) { display: flex; align-items: center; gap: 5px; }
+.stock-ageing-table tbody th svg { flex: none; color: var(--warning-text); }
+.stock-ageing-table__watch { background: color-mix(in srgb, var(--warning-surface) 12%, transparent); }
+.stock-ageing-table__warning { background: color-mix(in srgb, var(--warning-surface) 24%, transparent); }
+.stock-ageing-table__aged { color: var(--danger-text) !important; background: color-mix(in srgb, var(--danger-surface) 24%, transparent); font-weight: var(--weight-semibold); }
+.stock-ageing-table__warning-row th { box-shadow: inset 3px 0 0 var(--warning-solid); }
+.stock-ageing__footer { flex-wrap: wrap; }
+.stock-ageing__footer > span:last-child { display: inline-flex; align-items: center; gap: 5px; }
+.stock-ageing__pagination { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1); }
+.stock-ageing__pagination > span { min-width: 90px; color: var(--text-secondary); text-align: center; }
+.stock-ageing__pagination .button { min-height: 28px; padding: 3px 8px; font-size: var(--text-xs); }
+
+@media (max-width: 1380px) {
+  .stock-ageing-summary { align-items: stretch; grid-template-columns: 1fr; }
+  .stock-ageing-summary__cards { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+  .stock-ageing__header { align-items: stretch; flex-direction: column; }
+  .stock-ageing__filters { justify-content: flex-start; }
+}
+
+@media (max-width: 760px) {
+  .stock-ageing-summary__cards { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+  .stock-ageing__filters > label, .stock-ageing__filters .stock-ageing__date { width: calc(50% - var(--space-1)); min-width: 150px; }
+  .stock-ageing__filters .stock-ageing__search { width: 100%; }
+  .stock-ageing__filters > .badge { align-self: flex-end; }
+  .stock-ageing__pagination { order: 3; width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .stock-ageing-summary__cards { grid-template-columns: 1fr; }
+  .stock-ageing__filters > label, .stock-ageing__filters .stock-ageing__date { width: 100%; }
+}

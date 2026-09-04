@@ -1,0 +1,21 @@
+.management-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.workspace-setup-card .card__header { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+.workspace-setup-card .card__body { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+.workspace-setup-card .workspace-overview { gap: var(--space-4); }
+.workspace-setup-card .workspace-overview__hero { padding: var(--space-4); }
+.workspace-setup-card .management-detail-grid > div { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+.management-form__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.management-textarea { width: 100%; min-height: 104px; resize: vertical; padding: var(--space-3); color: var(--text-primary); background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+.management-textarea:focus { border-color: var(--border-focus); box-shadow: var(--shadow-focus); outline: 0; }
+.management-form__switch-card { padding: var(--space-4); background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
+.management-form__actions { display: flex; justify-content: flex-end; gap: var(--space-3); }
+.workspace-overview { display: flex; flex-direction: column; gap: var(--space-6); }
+.workspace-overview__hero { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding: var(--space-6); background: linear-gradient(135deg, var(--accent-surface), transparent 68%); border: 1px solid var(--accent-border); border-radius: var(--radius-xl); }
+.workspace-overview__eyebrow { display: block; margin-bottom: var(--space-2); font: var(--weight-semibold) var(--text-xs)/1 var(--font-mono); letter-spacing: .08em; color: var(--text-accent); }
+.workspace-overview__hero p { margin-top: var(--space-2); color: var(--text-secondary); }
+.management-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; overflow: hidden; background: var(--border-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
+.management-detail-grid > div { padding: var(--space-4); background: var(--surface-raised); }
+.management-detail-grid dt { margin-bottom: var(--space-1); color: var(--text-tertiary); font-size: var(--text-xs); }
+.management-detail-grid dd { color: var(--text-primary); font-weight: var(--weight-medium); overflow-wrap: anywhere; }
+.management-readonly { padding: var(--space-3) var(--space-4); color: var(--text-secondary); background: var(--info-surface); border: 1px solid var(--info-border); border-radius: var(--radius-md); }
+@media (max-width: 639px) { .management-form__grid, .management-detail-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,16 @@
+# Integration tests: isolated in-memory database, deterministic security settings.
+spring:
+  datasource:
+    url: jdbc:h2:mem:customreporting-test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+app:
+  security:
+    jwt:
+      secret: integration-test-secret-value-at-least-32-characters

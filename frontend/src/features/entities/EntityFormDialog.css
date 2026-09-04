@@ -1,0 +1,49 @@
+.entity-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.entity-form__switch {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-subtle);
+  padding-block-start: var(--space-4);
+}
+
+.entity-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.entity-form__actions-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  /* Pushes the primary actions to the end when there is no Delete button. */
+  margin-left: auto;
+}
+
+.entity-form__delete {
+  color: var(--danger-text);
+}
+
+.entity-form__delete:hover:not(:disabled) {
+  background-color: var(--danger-surface);
+  color: var(--danger-text);
+}
+
+@media (max-width: 479px) {
+  .entity-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .entity-form__actions-end {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    margin-left: 0;
+  }
+}

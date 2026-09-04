@@ -1,0 +1,18 @@
+.branch-switcher__trigger { max-width: 220px; }
+.branch-switcher__name { max-width: 130px; }
+.branch-switcher__popover { width: 300px; }
+.branch-switcher__option { width: 100%; }
+.branch-switcher__primary { flex-shrink: 0; padding: 2px 6px; color: var(--text-accent); background: var(--accent-surface); border-radius: var(--radius-full); font-size: 10px; font-weight: var(--weight-semibold); }
+.branch-switcher__footer { border-top: 1px solid var(--border-subtle); }
+
+@media (max-width: 639px) {
+  .branch-switcher__trigger { max-width: 150px; }
+  .branch-switcher__caption { display: none; }
+  .branch-switcher__name { max-width: 90px; }
+}
+
+@media (max-width: 479px) {
+  .branch-switcher__trigger { max-width: 112px; }
+  .branch-switcher__badge { display: none; }
+  .branch-switcher__name { max-width: 72px; }
+}

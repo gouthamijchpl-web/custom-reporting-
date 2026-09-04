@@ -1,0 +1,88 @@
+.app-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--topbar-height);
+  padding: 0 var(--space-4);
+  background: rgba(252, 255, 247, 0.72);
+  border-bottom: 1px solid rgba(101, 163, 13, 0.1);
+  box-shadow: 0 8px 24px rgba(37, 66, 23, 0.04);
+  backdrop-filter: blur(22px) saturate(125%);
+  flex-shrink: 0;
+}
+
+.app-header__menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: calc(var(--space-2) * -1);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.app-header__menu:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.app-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--accent-solid);
+}
+
+.app-header__brand-name {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pushed to the far right on every screen size. */
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  margin-left: auto;
+}
+
+.app-header__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: #142006;
+  background-color: var(--accent-solid);
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 479px) {
+  .app-header {
+    padding: 0 var(--space-3);
+  }
+
+  /* The brand name would crowd out the entity box on the narrowest screens. */
+  .app-header__brand-name {
+    display: none;
+  }
+
+  .app-header__actions {
+    gap: var(--space-2);
+  }
+}

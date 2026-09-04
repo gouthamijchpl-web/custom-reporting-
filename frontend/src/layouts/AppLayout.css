@@ -1,0 +1,213 @@
+.app-theme-bright {
+  color-scheme: light;
+
+  --surface-canvas: #f7f9e8;
+  --surface-raised: #fffefa;
+  --surface-sunken: #f1f6e9;
+  --surface-hover: #edf5e5;
+  --surface-active: #e4eedb;
+  --surface-inverse: #182013;
+
+  --border-subtle: #dce6d2;
+  --border-default: #c3d1b7;
+  --border-strong: #98ab89;
+  --border-focus: #65a30d;
+
+  --text-primary: #1b2417;
+  --text-secondary: #465140;
+  --text-tertiary: #586451;
+  --text-placeholder: #838e7b;
+  --text-inverse: #17200f;
+  --text-accent: #4d7c0f;
+
+  --accent-surface: rgba(132, 204, 22, 0.1);
+  --accent-border: rgba(101, 163, 13, 0.24);
+  --accent-solid: #65a30d;
+  --accent-solid-hover: #4d7c0f;
+
+  --success-surface: #e9f8ef;
+  --success-border: #a9dfbd;
+  --success-text: #14633b;
+  --success-solid: #198754;
+  --warning-surface: #fff6e8;
+  --warning-border: #f3d19a;
+  --warning-text: #7a4d0a;
+  --warning-solid: #bd7810;
+  --danger-surface: #fdedee;
+  --danger-border: #f5c2c6;
+  --danger-text: #9c1c26;
+  --danger-solid: #d13b46;
+  --info-surface: #f0f5e8;
+  --info-border: #c9dbb9;
+  --info-text: #466522;
+  --info-solid: #648d34;
+
+  --shadow-xs: 0 1px 2px rgba(37, 66, 23, 0.035);
+  --shadow-sm: 0 3px 12px rgba(37, 66, 23, 0.055);
+  --shadow-md: 0 10px 28px rgba(37, 66, 23, 0.075), 0 2px 5px rgba(37, 66, 23, 0.035);
+  --shadow-lg: 0 20px 48px rgba(37, 66, 23, 0.13), 0 7px 16px rgba(37, 66, 23, 0.05);
+  --shadow-focus: 0 0 0 2px rgba(101, 163, 13, 0.12);
+  --overlay-scrim: rgba(24, 38, 16, 0.34);
+}
+
+.app-frame {
+  display: flex;
+  height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(190, 242, 100, 0.34), transparent 28%),
+    radial-gradient(circle at 94% 92%, rgba(120, 225, 190, 0.3), transparent 31%),
+    linear-gradient(135deg, #f7f9e5 0%, #f9f8ee 50%, #d2eee0 100%);
+}
+
+.app-layout {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(105deg, rgba(247, 252, 231, 0.79) 0%, rgba(247, 252, 237, 0.84) 48%, rgba(233, 247, 225, 0.9) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(210, 237, 196, 0.35)),
+    url('/images/reporting-landscape-v1.png') center / cover fixed;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.app-layout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 78% 4%, rgba(190, 242, 100, 0.18), transparent 28%),
+    radial-gradient(circle at 38% 92%, rgba(111, 218, 169, 0.13), transparent 32%);
+  pointer-events: none;
+}
+
+.app-layout__rail {
+  position: sticky;
+  top: 0;
+  height: 100%;
+  flex-shrink: 0;
+  z-index: var(--z-sidebar);
+  box-shadow: 10px 0 30px rgba(37, 66, 23, 0.045);
+}
+
+.app-layout__main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Without this a wide child can stretch the flex item and scroll the page sideways. */
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-layout__content {
+  flex: 1;
+  padding: var(--space-8);
+  overflow: auto;
+  background: transparent;
+}
+
+.app-layout__container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  margin: 0 auto;
+}
+
+.app-theme-bright .button--primary {
+  color: #ffffff;
+  font-weight: var(--weight-semibold);
+  background: #4d7c0f;
+  border-color: #466f0e;
+  box-shadow: 0 5px 14px rgba(77, 124, 15, 0.2);
+}
+
+.app-theme-bright .button--primary:hover:not(:disabled) {
+  color: #ffffff;
+  background: #3f6212;
+  border-color: #3f6212;
+  box-shadow: 0 6px 16px rgba(63, 98, 18, 0.24);
+}
+
+.app-theme-bright .button--primary:active:not(:disabled) {
+  color: #ffffff;
+  background: #365314;
+  border-color: #365314;
+}
+
+.app-theme-bright .button--primary:disabled {
+  color: #ffffff;
+  background: #607447;
+  border-color: #607447;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.app-theme-bright .button--primary svg,
+.app-theme-bright .button--primary .button__spinner {
+  color: inherit;
+}
+
+/* ---- Mobile drawer ---- */
+
+.app-layout__drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: var(--overlay-scrim);
+  animation: drawer-scrim-in var(--transition-base) ease-out;
+}
+
+.app-layout__drawer {
+  width: min(var(--sidebar-width), 84vw);
+  height: 100%;
+  background-color: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(24px) saturate(120%);
+  animation: drawer-slide-in var(--transition-slow) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawer-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-layout__content {
+    padding: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-frame {
+    padding: 0;
+  }
+
+  .app-layout {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .app-layout__content {
+    padding: var(--space-4);
+  }
+}

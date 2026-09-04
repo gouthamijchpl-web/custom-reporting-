@@ -1,0 +1,4 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+data/
+config/application.yml

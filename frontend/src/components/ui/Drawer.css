@@ -1,0 +1,11 @@
+.drawer__scrim { position: fixed; inset: 0; z-index: var(--z-modal); background: var(--overlay-scrim); animation: drawer-fade var(--transition-base); }
+.drawer { position: absolute; inset: 0 0 0 auto; width: min(620px, 92vw); background: color-mix(in srgb, var(--surface-raised) 94%, transparent); border-left: 1px solid var(--accent-border); box-shadow: var(--shadow-lg); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; animation: drawer-enter var(--transition-slow) cubic-bezier(.16,1,.3,1); backdrop-filter: blur(26px) saturate(120%); }
+.drawer__header { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-6); border-bottom: 1px solid var(--border-subtle); }
+.drawer__header p { margin-top: var(--space-2); color: var(--text-tertiary); line-height: var(--leading-relaxed); }
+.drawer__close { width: 34px; height: 34px; display: grid; place-items: center; color: var(--text-tertiary); border-radius: var(--radius-md); flex: none; }
+.drawer__close:hover { color: var(--text-primary); background: var(--surface-hover); }
+.drawer__body { min-height: 0; overflow-y: auto; padding: var(--space-6); }
+.drawer__footer { position: sticky; bottom: 0; min-height: 72px; display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); padding: var(--space-4) var(--space-6); background: color-mix(in srgb, var(--surface-raised) 94%, transparent); border-top: 1px solid var(--border-subtle); backdrop-filter: blur(12px); }
+@keyframes drawer-enter { from { opacity: .7; transform: translateX(40px); } }
+@keyframes drawer-fade { from { opacity: 0; } }
+@media (max-width: 639px) { .drawer { width: 100%; border-left: 0; } .drawer__header, .drawer__body { padding: var(--space-4); } .drawer__footer { padding: var(--space-3) var(--space-4); } }

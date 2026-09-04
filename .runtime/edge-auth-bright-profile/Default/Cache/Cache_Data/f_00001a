@@ -1,0 +1,351 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/features/team/TeamMemberList.tsx");const _jsxDEV = __vite__cjsImport5_react_jsxDevRuntime["jsxDEV"];import { Breakpoint, useMediaQuery } from "/src/hooks/index.ts";
+import { formatDateTime } from "/src/utils/formatters.ts";
+import { AccessStatusBadge, RoleBadge } from "/src/features/team/badges.tsx?t=1787564978644";
+import { TeamMemberActions } from "/src/features/team/TeamMemberActions.tsx";
+import "/src/features/team/TeamMemberList.css";
+var _jsxFileName = "C:/custom reporting/frontend/src/features/team/TeamMemberList.tsx";
+import __vite__cjsImport5_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=3ef98864";
+var _s = $RefreshSig$();
+/**
+* The team roster.
+*
+* A table is the right shape for this data on a wide screen and the wrong one on a narrow
+* screen, so below the tablet breakpoint each member becomes a card instead. Switching the
+* markup rather than restyling the table avoids a row that either overflows sideways or
+* collapses into unlabelled fragments.
+*/
+export function TeamMemberList({ members, onEdit }) {
+	_s();
+	const isCompact = useMediaQuery(Breakpoint.mobile);
+	const actionsFor = (member) => /* @__PURE__ */ _jsxDEV(TeamMemberActions, {
+		member,
+		onEdit
+	}, void 0, false, {
+		fileName: _jsxFileName,
+		lineNumber: 25,
+		columnNumber: 5
+	}, this);
+	if (isCompact) {
+		return /* @__PURE__ */ _jsxDEV("ul", {
+			className: "member-cards",
+			children: members.map((member) => /* @__PURE__ */ _jsxDEV("li", {
+				className: "member-card",
+				children: [/* @__PURE__ */ _jsxDEV("div", {
+					className: "member-card__head",
+					children: [/* @__PURE__ */ _jsxDEV("div", {
+						className: "member-card__identity",
+						children: [/* @__PURE__ */ _jsxDEV("span", {
+							className: "member-card__name",
+							children: [member.fullName, member.self && /* @__PURE__ */ _jsxDEV("span", {
+								className: "member-list__you",
+								children: "You"
+							}, void 0, false, {
+								fileName: _jsxFileName,
+								lineNumber: 37,
+								columnNumber: 35
+							}, this)]
+						}, void 0, true, {
+							fileName: _jsxFileName,
+							lineNumber: 35,
+							columnNumber: 17
+						}, this), /* @__PURE__ */ _jsxDEV("span", {
+							className: "member-card__email",
+							children: member.email
+						}, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 39,
+							columnNumber: 17
+						}, this)]
+					}, void 0, true, {
+						fileName: _jsxFileName,
+						lineNumber: 34,
+						columnNumber: 15
+					}, this), actionsFor(member)]
+				}, void 0, true, {
+					fileName: _jsxFileName,
+					lineNumber: 33,
+					columnNumber: 13
+				}, this), /* @__PURE__ */ _jsxDEV("dl", {
+					className: "member-card__facts",
+					children: [
+						/* @__PURE__ */ _jsxDEV("div", { children: [/* @__PURE__ */ _jsxDEV("dt", { children: "Role" }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 46,
+							columnNumber: 17
+						}, this), /* @__PURE__ */ _jsxDEV("dd", { children: /* @__PURE__ */ _jsxDEV(RoleBadge, { role: member.role }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 48,
+							columnNumber: 19
+						}, this) }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 47,
+							columnNumber: 17
+						}, this)] }, void 0, true, {
+							fileName: _jsxFileName,
+							lineNumber: 45,
+							columnNumber: 15
+						}, this),
+						/* @__PURE__ */ _jsxDEV("div", { children: [/* @__PURE__ */ _jsxDEV("dt", { children: "Status" }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 52,
+							columnNumber: 17
+						}, this), /* @__PURE__ */ _jsxDEV("dd", { children: /* @__PURE__ */ _jsxDEV(AccessStatusBadge, { status: member.accessStatus }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 54,
+							columnNumber: 19
+						}, this) }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 53,
+							columnNumber: 17
+						}, this)] }, void 0, true, {
+							fileName: _jsxFileName,
+							lineNumber: 51,
+							columnNumber: 15
+						}, this),
+						/* @__PURE__ */ _jsxDEV("div", { children: [/* @__PURE__ */ _jsxDEV("dt", { children: "Added on" }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 58,
+							columnNumber: 17
+						}, this), /* @__PURE__ */ _jsxDEV("dd", { children: formatDateTime(member.addedOn) }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 59,
+							columnNumber: 17
+						}, this)] }, void 0, true, {
+							fileName: _jsxFileName,
+							lineNumber: 57,
+							columnNumber: 15
+						}, this),
+						/* @__PURE__ */ _jsxDEV("div", { children: [/* @__PURE__ */ _jsxDEV("dt", { children: "Last login" }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 62,
+							columnNumber: 17
+						}, this), /* @__PURE__ */ _jsxDEV("dd", { children: member.lastLoginAt ? formatDateTime(member.lastLoginAt) : "Never" }, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 63,
+							columnNumber: 17
+						}, this)] }, void 0, true, {
+							fileName: _jsxFileName,
+							lineNumber: 61,
+							columnNumber: 15
+						}, this)
+					]
+				}, void 0, true, {
+					fileName: _jsxFileName,
+					lineNumber: 44,
+					columnNumber: 13
+				}, this)]
+			}, member.id, true, {
+				fileName: _jsxFileName,
+				lineNumber: 32,
+				columnNumber: 11
+			}, this))
+		}, void 0, false, {
+			fileName: _jsxFileName,
+			lineNumber: 30,
+			columnNumber: 7
+		}, this);
+	}
+	return /* @__PURE__ */ _jsxDEV("div", {
+		className: "member-table__scroll",
+		children: /* @__PURE__ */ _jsxDEV("table", {
+			className: "member-table",
+			children: [
+				/* @__PURE__ */ _jsxDEV("caption", {
+					className: "sr-only",
+					children: "Team members and their access to the application"
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 75,
+					columnNumber: 9
+				}, this),
+				/* @__PURE__ */ _jsxDEV("thead", { children: /* @__PURE__ */ _jsxDEV("tr", { children: [
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Name"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 78,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Email"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 79,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Role"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 80,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Status"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 81,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Added on"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 82,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: "Last login"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 83,
+						columnNumber: 13
+					}, this),
+					/* @__PURE__ */ _jsxDEV("th", {
+						scope: "col",
+						children: /* @__PURE__ */ _jsxDEV("span", {
+							className: "sr-only",
+							children: "Actions"
+						}, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 85,
+							columnNumber: 15
+						}, this)
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 84,
+						columnNumber: 13
+					}, this)
+				] }, void 0, true, {
+					fileName: _jsxFileName,
+					lineNumber: 77,
+					columnNumber: 11
+				}, this) }, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 76,
+					columnNumber: 9
+				}, this),
+				/* @__PURE__ */ _jsxDEV("tbody", { children: members.map((member) => /* @__PURE__ */ _jsxDEV("tr", { children: [
+					/* @__PURE__ */ _jsxDEV("td", {
+						className: "member-table__name",
+						children: [member.fullName, member.self && /* @__PURE__ */ _jsxDEV("span", {
+							className: "member-list__you",
+							children: "You"
+						}, void 0, false, {
+							fileName: _jsxFileName,
+							lineNumber: 94,
+							columnNumber: 33
+						}, this)]
+					}, void 0, true, {
+						fileName: _jsxFileName,
+						lineNumber: 92,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", {
+						className: "member-table__email",
+						title: member.email,
+						children: member.email
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 96,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", { children: /* @__PURE__ */ _jsxDEV(RoleBadge, { role: member.role }, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 100,
+						columnNumber: 17
+					}, this) }, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 99,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", { children: /* @__PURE__ */ _jsxDEV(AccessStatusBadge, { status: member.accessStatus }, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 103,
+						columnNumber: 17
+					}, this) }, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 102,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", {
+						className: "member-table__muted",
+						children: formatDateTime(member.addedOn)
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 105,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", {
+						className: "member-table__muted",
+						children: member.lastLoginAt ? formatDateTime(member.lastLoginAt) : "Never"
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 106,
+						columnNumber: 15
+					}, this),
+					/* @__PURE__ */ _jsxDEV("td", {
+						className: "member-table__actions",
+						children: actionsFor(member)
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 109,
+						columnNumber: 15
+					}, this)
+				] }, member.id, true, {
+					fileName: _jsxFileName,
+					lineNumber: 91,
+					columnNumber: 13
+				}, this)) }, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 89,
+					columnNumber: 9
+				}, this)
+			]
+		}, void 0, true, {
+			fileName: _jsxFileName,
+			lineNumber: 74,
+			columnNumber: 7
+		}, this)
+	}, void 0, false, {
+		fileName: _jsxFileName,
+		lineNumber: 73,
+		columnNumber: 5
+	}, this);
+}
+_s(TeamMemberList, "5pUeLWqVGgLX6bOps+TeZa69RKg=", false, function() {
+	return [useMediaQuery];
+});
+_c = TeamMemberList;
+var _c;
+$RefreshReg$(_c, "TeamMemberList");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+import * as __vite_react_currentExports from "/src/features/team/TeamMemberList.tsx?t=1787564978644";
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+
+  const currentExports = __vite_react_currentExports;
+  queueMicrotask(() => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/custom reporting/frontend/src/features/team/TeamMemberList.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/custom reporting/frontend/src/features/team/TeamMemberList.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) { return RefreshRuntime.register(type, "C:/custom reporting/frontend/src/features/team/TeamMemberList.tsx" + ' ' + id); }
+function $RefreshSig$() { return RefreshRuntime.createSignatureFunctionForTransform(); }
+
+//# sourceMappingURL=data:application/json;base64,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TztnQkFDL0MsT0FBTztLQUNOOzs7OztLQUNKLHdCQUFDLE1BQUQsWUFDRSx3QkFBQyxXQUFELEVBQVcsTUFBTSxPQUFPLEtBQU87Ozs7Y0FDN0I7Ozs7O0tBQ0osd0JBQUMsTUFBRCxZQUNFLHdCQUFDLG1CQUFELEVBQW1CLFFBQVEsT0FBTyxhQUFlOzs7O2NBQy9DOzs7OztLQUNKLHdCQUFDLE1BQUQ7TUFBSSxXQUFVO2dCQUF1QixlQUFlLE9BQU8sT0FBTztLQUFNOzs7OztLQUN4RSx3QkFBQyxNQUFEO01BQUksV0FBVTtnQkFDWCxPQUFPLGNBQWMsZUFBZSxPQUFPLFdBQVcsSUFBSTtLQUN6RDs7Ozs7S0FDSix3QkFBQyxNQUFEO01BQUksV0FBVTtnQkFBeUIsV0FBVyxNQUFNO0tBQU07Ozs7O0lBQzVELEtBbkJLLE9BQU87Ozs7V0FtQlosQ0FDTCxFQUNJOzs7OztHQUNGOzs7Ozs7Q0FDSjs7Ozs7QUFFVCIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJUZWFtTWVtYmVyTGlzdC50c3giXSwidmVyc2lvbiI6Mywic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQnJlYWtwb2ludCwgdXNlTWVkaWFRdWVyeSB9IGZyb20gJ0AvaG9va3MnO1xuaW1wb3J0IHsgZm9ybWF0RGF0ZVRpbWUgfSBmcm9tICdAL3V0aWxzL2Zvcm1hdHRlcnMnO1xuaW1wb3J0IHsgQWNjZXNzU3RhdHVzQmFkZ2UsIFJvbGVCYWRnZSB9IGZyb20gJy4vYmFkZ2VzJztcbmltcG9ydCB7IFRlYW1NZW1iZXJBY3Rpb25zIH0gZnJvbSAnLi9UZWFtTWVtYmVyQWN0aW9ucyc7XG5pbXBvcnQgdHlwZSB7IFRlYW1NZW1iZXIgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCAnLi9UZWFtTWVtYmVyTGlzdC5jc3MnO1xuXG5pbnRlcmZhY2UgVGVhbU1lbWJlckxpc3RQcm9wcyB7XG4gIG1lbWJlcnM6IFRlYW1NZW1iZXJbXTtcbiAgb25FZGl0OiAobWVtYmVyOiBUZWFtTWVtYmVyKSA9PiB2b2lkO1xufVxuXG4vKipcbiAqIFRoZSB0ZWFtIHJvc3Rlci5cbiAqXG4gKiBBIHRhYmxlIGlzIHRoZSByaWdodCBzaGFwZSBmb3IgdGhpcyBkYXRhIG9uIGEgd2lkZSBzY3JlZW4gYW5kIHRoZSB3cm9uZyBvbmUgb24gYSBuYXJyb3dcbiAqIHNjcmVlbiwgc28gYmVsb3cgdGhlIHRhYmxldCBicmVha3BvaW50IGVhY2ggbWVtYmVyIGJlY29tZXMgYSBjYXJkIGluc3RlYWQuIFN3aXRjaGluZyB0aGVcbiAqIG1hcmt1cCByYXRoZXIgdGhhbiByZXN0eWxpbmcgdGhlIHRhYmxlIGF2b2lkcyBhIHJvdyB0aGF0IGVpdGhlciBvdmVyZmxvd3Mgc2lkZXdheXMgb3JcbiAqIGNvbGxhcHNlcyBpbnRvIHVubGFiZWxsZWQgZnJhZ21lbnRzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gVGVhbU1lbWJlckxpc3QoeyBtZW1iZXJzLCBvbkVkaXQgfTogVGVhbU1lbWJlckxpc3RQcm9wcykge1xuICBjb25zdCBpc0NvbXBhY3QgPSB1c2VNZWRpYVF1ZXJ5KEJyZWFrcG9pbnQubW9iaWxlKTtcblxuICBjb25zdCBhY3Rpb25zRm9yID0gKG1lbWJlcjogVGVhbU1lbWJlcikgPT4gKFxuICAgIDxUZWFtTWVtYmVyQWN0aW9ucyBtZW1iZXI9e21lbWJlcn0gb25FZGl0PXtvbkVkaXR9IC8+XG4gICk7XG5cbiAgaWYgKGlzQ29tcGFjdCkge1xuICAgIHJldHVybiAoXG4gICAgICA8dWwgY2xhc3NOYW1lPVwibWVtYmVyLWNhcmRzXCI+XG4gICAgICAgIHttZW1iZXJzLm1hcCgobWVtYmVyKSA9PiAoXG4gICAgICAgICAgPGxpIGtleT17bWVtYmVyLmlkfSBjbGFzc05hbWU9XCJtZW1iZXItY2FyZFwiPlxuICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJtZW1iZXItY2FyZF9faGVhZFwiPlxuICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cIm1lbWJlci1jYXJkX19pZGVudGl0eVwiPlxuICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cIm1lbWJlci1jYXJkX19uYW1lXCI+XG4gICAgICAgICAgICAgICAgICB7bWVtYmVyLmZ1bGxOYW1lfVxuICAgICAgICAgICAgICAgICAge21lbWJlci5zZWxmICYmIDxzcGFuIGNsYXNzTmFtZT1cIm1lbWJlci1saXN0X195b3VcIj5Zb3U8L3NwYW4+fVxuICAgICAgICAgICAgICAgIDwvc3Bhbj5cbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJtZW1iZXItY2FyZF9fZW1haWxcIj57bWVtYmVyLmVtYWlsfTwvc3Bhbj5cbiAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICAgIHthY3Rpb25zRm9yKG1lbWJlcil9XG4gICAgICAgICAgICA8L2Rpdj5cblxuICAgICAgICAgICAgPGRsIGNsYXNzTmFtZT1cIm1lbWJlci1jYXJkX19mYWN0c1wiPlxuICAgICAgICAgICAgICA8ZGl2PlxuICAgICAgICAgICAgICAgIDxkdD5Sb2xlPC9kdD5cbiAgICAgICAgICAgICAgICA8ZGQ+XG4gICAgICAgICAgICAgICAgICA8Um9sZUJhZGdlIHJvbGU9e21lbWJlci5yb2xlfSAvPlxuICAgICAgICAgICAgICAgIDwvZGQ+XG4gICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgICA8ZGl2PlxuICAgICAgICAgICAgICAgIDxkdD5TdGF0dXM8L2R0PlxuICAgICAgICAgICAgICAgIDxkZD5cbiAgICAgICAgICAgICAgICAgIDxBY2Nlc3NTdGF0dXNCYWRnZSBzdGF0dXM9e21lbWJlci5hY2Nlc3NTdGF0dXN9IC8+XG4gICAgICAgICAgICAgICAgPC9kZD5cbiAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgPGR0PkFkZGVkIG9uPC9kdD5cbiAgICAgICAgICAgICAgICA8ZGQ+e2Zvcm1hdERhdGVUaW1lKG1lbWJlci5hZGRlZE9uKX08L2RkPlxuICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgICAgPGRpdj5cbiAgICAgICAgICAgICAgICA8ZHQ+TGFzdCBsb2dpbjwvZHQ+XG4gICAgICAgICAgICAgICAgPGRkPnttZW1iZXIubGFzdExvZ2luQXQgPyBmb3JtYXREYXRlVGltZShtZW1iZXIubGFzdExvZ2luQXQpIDogJ05ldmVyJ308L2RkPlxuICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgIDwvZGw+XG4gICAgICAgICAgPC9saT5cbiAgICAgICAgKSl9XG4gICAgICA8L3VsPlxuICAgICk7XG4gIH1cblxuICByZXR1cm4gKFxuICAgIDxkaXYgY2xhc3NOYW1lPVwibWVtYmVyLXRhYmxlX19zY3JvbGxcIj5cbiAgICAgIDx0YWJsZSBjbGFzc05hbWU9XCJtZW1iZXItdGFibGVcIj5cbiAgICAgICAgPGNhcHRpb24gY2xhc3NOYW1lPVwic3Itb25seVwiPlRlYW0gbWVtYmVycyBhbmQgdGhlaXIgYWNjZXNzIHRvIHRoZSBhcHBsaWNhdGlvbjwvY2FwdGlvbj5cbiAgICAgICAgPHRoZWFkPlxuICAgICAgICAgIDx0cj5cbiAgICAgICAgICAgIDx0aCBzY29wZT1cImNvbFwiPk5hbWU8L3RoPlxuICAgICAgICAgICAgPHRoIHNjb3BlPVwiY29sXCI+RW1haWw8L3RoPlxuICAgICAgICAgICAgPHRoIHNjb3BlPVwiY29sXCI+Um9sZTwvdGg+XG4gICAgICAgICAgICA8dGggc2NvcGU9XCJjb2xcIj5TdGF0dXM8L3RoPlxuICAgICAgICAgICAgPHRoIHNjb3BlPVwiY29sXCI+QWRkZWQgb248L3RoPlxuICAgICAgICAgICAgPHRoIHNjb3BlPVwiY29sXCI+TGFzdCBsb2dpbjwvdGg+XG4gICAgICAgICAgICA8dGggc2NvcGU9XCJjb2xcIj5cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwic3Itb25seVwiPkFjdGlvbnM8L3NwYW4+XG4gICAgICAgICAgICA8L3RoPlxuICAgICAgICAgIDwvdHI+XG4gICAgICAgIDwvdGhlYWQ+XG4gICAgICAgIDx0Ym9keT5cbiAgICAgICAgICB7bWVtYmVycy5tYXAoKG1lbWJlcikgPT4gKFxuICAgICAgICAgICAgPHRyIGtleT17bWVtYmVyLmlkfT5cbiAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT1cIm1lbWJlci10YWJsZV9fbmFtZVwiPlxuICAgICAgICAgICAgICAgIHttZW1iZXIuZnVsbE5hbWV9XG4gICAgICAgICAgICAgICAge21lbWJlci5zZWxmICYmIDxzcGFuIGNsYXNzTmFtZT1cIm1lbWJlci1saXN0X195b3VcIj5Zb3U8L3NwYW4+fVxuICAgICAgICAgICAgICA8L3RkPlxuICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPVwibWVtYmVyLXRhYmxlX19lbWFpbFwiIHRpdGxlPXttZW1iZXIuZW1haWx9PlxuICAgICAgICAgICAgICAgIHttZW1iZXIuZW1haWx9XG4gICAgICAgICAgICAgIDwvdGQ+XG4gICAgICAgICAgICAgIDx0ZD5cbiAgICAgICAgICAgICAgICA8Um9sZUJhZGdlIHJvbGU9e21lbWJlci5yb2xlfSAvPlxuICAgICAgICAgICAgICA8L3RkPlxuICAgICAgICAgICAgICA8dGQ+XG4gICAgICAgICAgICAgICAgPEFjY2Vzc1N0YXR1c0JhZGdlIHN0YXR1cz17bWVtYmVyLmFjY2Vzc1N0YXR1c30gLz5cbiAgICAgICAgICAgICAgPC90ZD5cbiAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT1cIm1lbWJlci10YWJsZV9fbXV0ZWRcIj57Zm9ybWF0RGF0ZVRpbWUobWVtYmVyLmFkZGVkT24pfTwvdGQ+XG4gICAgICAgICAgICAgIDx0ZCBjbGFzc05hbWU9XCJtZW1iZXItdGFibGVfX211dGVkXCI+XG4gICAgICAgICAgICAgICAge21lbWJlci5sYXN0TG9naW5BdCA/IGZvcm1hdERhdGVUaW1lKG1lbWJlci5sYXN0TG9naW5BdCkgOiAnTmV2ZXInfVxuICAgICAgICAgICAgICA8L3RkPlxuICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPVwibWVtYmVyLXRhYmxlX19hY3Rpb25zXCI+e2FjdGlvbnNGb3IobWVtYmVyKX08L3RkPlxuICAgICAgICAgICAgPC90cj5cbiAgICAgICAgICApKX1cbiAgICAgICAgPC90Ym9keT5cbiAgICAgIDwvdGFibGU+XG4gICAgPC9kaXY+XG4gICk7XG59XG4iXX0=

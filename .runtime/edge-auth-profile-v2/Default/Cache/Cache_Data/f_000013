@@ -1,0 +1,316 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/features/entities/EntityFormDialog.tsx");const useCallback = __vite__cjsImport0_react["useCallback"]; const useMemo = __vite__cjsImport0_react["useMemo"]; const useState = __vite__cjsImport0_react["useState"];const _jsxDEV = __vite__cjsImport4_react_jsxDevRuntime["jsxDEV"]; const _Fragment = __vite__cjsImport4_react_jsxDevRuntime["Fragment"];import __vite__cjsImport0_react from "/node_modules/.vite/deps/react.js?v=3ef98864";
+import { Alert, Button, ConfirmDialog, FormField, Modal, Switch, TextInput } from "/src/components/ui/index.ts";
+import { useEntities, useForm } from "/src/hooks/index.ts";
+import "/src/features/entities/EntityFormDialog.css";
+var _jsxFileName = "C:/custom reporting/frontend/src/features/entities/EntityFormDialog.tsx";
+import __vite__cjsImport4_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=3ef98864";
+var _s = $RefreshSig$();
+const CODE_PATTERN = /^[A-Za-z0-9-]+$/;
+function validate(values) {
+	const name = values.name.trim();
+	const code = values.code.trim();
+	return {
+		name: name.length === 0 ? "Entity name is required." : name.length < 2 || name.length > 120 ? "Entity name must be between 2 and 120 characters." : undefined,
+		code: code.length === 0 ? "Entity code is required." : code.length > 12 ? "Code must be 12 characters or fewer." : !CODE_PATTERN.test(code) ? "Code may only contain letters, numbers and hyphens." : undefined,
+		description: values.description.trim().length > 500 ? "Description must be 500 characters or fewer." : undefined
+	};
+}
+/**
+* Create or edit an entity.
+*
+* One dialog serves both jobs: the fields are identical, and splitting them would mean
+* maintaining the same validation twice. Editing additionally offers deactivation and
+* deletion, the two actions that only make sense on something that already exists.
+*/
+export function EntityFormDialog({ isOpen, entity, onClose, onSaved }) {
+	_s();
+	const { create, update, remove } = useEntities();
+	const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState(null);
+	const isEditing = entity !== null;
+	const initialValues = useMemo(() => ({
+		name: entity?.name ?? "",
+		code: entity?.code ?? "",
+		description: entity?.description ?? "",
+		active: entity?.active ?? true
+	}), [entity]);
+	const handleSubmit = useCallback(async (values) => {
+		const payload = {
+			groupId: entity?.groupId ?? "",
+			primaryBranchName: "",
+			name: values.name.trim(),
+			code: values.code.trim().toUpperCase(),
+			description: values.description.trim(),
+			pan: entity?.pan ?? "",
+			primaryGstin: entity?.primaryGstin ?? "",
+			gstnUsername: entity?.gstnUsername ?? "",
+			gstnPassword: "",
+			tallyCompanyName: entity?.tallyCompanyName ?? "",
+			tallyHost: entity?.tallyHost ?? "localhost",
+			tallyPort: entity?.tallyPort ?? 9e3,
+			active: values.active,
+			multipleBranches: entity?.multipleBranches ?? false,
+			eInvoiceEnabled: entity?.eInvoiceEnabled ?? false,
+			eWayBillEnabled: entity?.eWayBillEnabled ?? false,
+			stockEnabled: entity?.stockEnabled ?? false,
+			costCentreExtractionEnabled: entity?.costCentreExtractionEnabled ?? false
+		};
+		const saved = isEditing ? await update(entity.id, payload) : await create(payload);
+		onSaved?.(saved);
+		onClose();
+	}, [
+		create,
+		entity,
+		isEditing,
+		onClose,
+		onSaved,
+		update
+	]);
+	const form = useForm({
+		initialValues,
+		validate,
+		onSubmit: handleSubmit
+	});
+	const fieldError = (field) => form.touched[field] ? form.errors[field] : undefined;
+	const handleDelete = useCallback(() => {
+		if (!entity) {
+			return;
+		}
+		setIsDeleting(true);
+		setDeleteError(null);
+		void remove(entity.id).then(() => {
+			setIsConfirmingDelete(false);
+			onClose();
+		}).catch(() => setDeleteError("Unable to delete this entity. Please try again.")).finally(() => setIsDeleting(false));
+	}, [
+		entity,
+		onClose,
+		remove
+	]);
+	return /* @__PURE__ */ _jsxDEV(_Fragment, { children: [/* @__PURE__ */ _jsxDEV(Modal, {
+		isOpen: isOpen && !isConfirmingDelete,
+		size: "md",
+		title: isEditing ? "Edit entity" : "Add entity",
+		description: isEditing ? "Update the details of this entity." : "Add a business you report on. You can switch between entities at any time.",
+		onClose,
+		footer: /* @__PURE__ */ _jsxDEV("div", {
+			className: "entity-form__actions",
+			children: [isEditing && /* @__PURE__ */ _jsxDEV(Button, {
+				type: "button",
+				variant: "ghost",
+				className: "entity-form__delete",
+				onClick: () => setIsConfirmingDelete(true),
+				children: "Delete"
+			}, void 0, false, {
+				fileName: _jsxFileName,
+				lineNumber: 147,
+				columnNumber: 15
+			}, this), /* @__PURE__ */ _jsxDEV("div", {
+				className: "entity-form__actions-end",
+				children: [/* @__PURE__ */ _jsxDEV(Button, {
+					type: "button",
+					variant: "secondary",
+					onClick: onClose,
+					disabled: form.isSubmitting,
+					children: "Cancel"
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 157,
+					columnNumber: 15
+				}, this), /* @__PURE__ */ _jsxDEV(Button, {
+					type: "submit",
+					form: "entity-form",
+					isLoading: form.isSubmitting,
+					children: isEditing ? "Save changes" : "Add entity"
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 160,
+					columnNumber: 15
+				}, this)]
+			}, void 0, true, {
+				fileName: _jsxFileName,
+				lineNumber: 156,
+				columnNumber: 13
+			}, this)]
+		}, void 0, true, {
+			fileName: _jsxFileName,
+			lineNumber: 145,
+			columnNumber: 11
+		}, this),
+		children: /* @__PURE__ */ _jsxDEV("form", {
+			id: "entity-form",
+			className: "entity-form",
+			onSubmit: form.handleSubmit,
+			noValidate: true,
+			children: [
+				form.formError && /* @__PURE__ */ _jsxDEV(Alert, {
+					variant: "danger",
+					children: form.formError
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 168,
+					columnNumber: 30
+				}, this),
+				deleteError && /* @__PURE__ */ _jsxDEV(Alert, {
+					variant: "danger",
+					children: deleteError
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 169,
+					columnNumber: 27
+				}, this),
+				/* @__PURE__ */ _jsxDEV(FormField, {
+					htmlFor: "entity-name",
+					label: "Entity name",
+					error: fieldError("name"),
+					required: true,
+					children: /* @__PURE__ */ _jsxDEV(TextInput, {
+						id: "entity-name",
+						name: "name",
+						placeholder: "Acme Private Limited",
+						value: form.values.name,
+						onChange: form.handleChange,
+						onBlur: form.handleBlur,
+						invalid: Boolean(fieldError("name")),
+						disabled: form.isSubmitting,
+						autoFocus: true
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 172,
+						columnNumber: 13
+					}, this)
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 171,
+					columnNumber: 11
+				}, this),
+				/* @__PURE__ */ _jsxDEV(FormField, {
+					htmlFor: "entity-code",
+					label: "Entity code",
+					error: fieldError("code"),
+					hint: "Required. Shown where the full name will not fit, for example ACME.",
+					required: true,
+					children: /* @__PURE__ */ _jsxDEV(TextInput, {
+						id: "entity-code",
+						name: "code",
+						placeholder: "ACME",
+						maxLength: 12,
+						value: form.values.code,
+						onChange: form.handleChange,
+						onBlur: form.handleBlur,
+						invalid: Boolean(fieldError("code")),
+						disabled: form.isSubmitting
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 192,
+						columnNumber: 13
+					}, this)
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 185,
+					columnNumber: 11
+				}, this),
+				/* @__PURE__ */ _jsxDEV(FormField, {
+					htmlFor: "entity-description",
+					label: "Description",
+					error: fieldError("description"),
+					hint: "Optional. A note about what this entity covers.",
+					children: /* @__PURE__ */ _jsxDEV(TextInput, {
+						id: "entity-description",
+						name: "description",
+						placeholder: "Primary trading company",
+						maxLength: 500,
+						value: form.values.description,
+						onChange: form.handleChange,
+						onBlur: form.handleBlur,
+						invalid: Boolean(fieldError("description")),
+						disabled: form.isSubmitting
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 211,
+						columnNumber: 13
+					}, this)
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 205,
+					columnNumber: 11
+				}, this),
+				isEditing && /* @__PURE__ */ _jsxDEV("div", {
+					className: "entity-form__switch",
+					children: /* @__PURE__ */ _jsxDEV(Switch, {
+						id: "entity-active",
+						label: "Active",
+						description: "Inactive entities are kept on record but cannot be selected.",
+						checked: form.values.active,
+						onChange: (checked) => form.setValue("active", checked),
+						disabled: form.isSubmitting
+					}, void 0, false, {
+						fileName: _jsxFileName,
+						lineNumber: 226,
+						columnNumber: 15
+					}, this)
+				}, void 0, false, {
+					fileName: _jsxFileName,
+					lineNumber: 225,
+					columnNumber: 13
+				}, this)
+			]
+		}, void 0, true, {
+			fileName: _jsxFileName,
+			lineNumber: 167,
+			columnNumber: 9
+		}, this)
+	}, void 0, false, {
+		fileName: _jsxFileName,
+		lineNumber: 134,
+		columnNumber: 7
+	}, this), /* @__PURE__ */ _jsxDEV(ConfirmDialog, {
+		isOpen: isConfirmingDelete,
+		title: `Archive ${entity?.name ?? "entity"}?`,
+		message: "The entity is archived while its historical relationships remain intact.",
+		confirmLabel: "Archive entity",
+		isDestructive: true,
+		isConfirming: isDeleting,
+		onConfirm: handleDelete,
+		onCancel: () => setIsConfirmingDelete(false)
+	}, void 0, false, {
+		fileName: _jsxFileName,
+		lineNumber: 239,
+		columnNumber: 7
+	}, this)] }, void 0, true, {
+		fileName: _jsxFileName,
+		lineNumber: 133,
+		columnNumber: 5
+	}, this);
+}
+_s(EntityFormDialog, "NQB01ui5Gx8rtYpvY6YGuweqFuE=", false, function() {
+	return [useEntities, useForm];
+});
+_c = EntityFormDialog;
+var _c;
+$RefreshReg$(_c, "EntityFormDialog");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+import * as __vite_react_currentExports from "/src/features/entities/EntityFormDialog.tsx";
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+
+  const currentExports = __vite_react_currentExports;
+  queueMicrotask(() => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/custom reporting/frontend/src/features/entities/EntityFormDialog.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/custom reporting/frontend/src/features/entities/EntityFormDialog.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) { return RefreshRuntime.register(type, "C:/custom reporting/frontend/src/features/entities/EntityFormDialog.tsx" + ' ' + id); }
+function $RefreshSig$() { return RefreshRuntime.createSignatureFunctionForTransform(); }
+
+//# sourceMappingURL=data:application/json;base64,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QUNFLElBQUc7TUFDSCxNQUFLO01BQ0wsYUFBWTtNQUNaLFdBQVc7TUFDWCxPQUFPLEtBQUssT0FBTztNQUNuQixVQUFVLEtBQUs7TUFDZixRQUFRLEtBQUs7TUFDYixTQUFTLFFBQVEsV0FBVyxNQUFNLENBQUM7TUFDbkMsVUFBVSxLQUFLO0tBQ2hCOzs7OztJQUNROzs7OztJQUVYLHdCQUFDLFdBQUQ7S0FDRSxTQUFRO0tBQ1IsT0FBTTtLQUNOLE9BQU8sV0FBVyxhQUFhO0tBQy9CLE1BQUs7ZUFFTCx3QkFBQyxXQUFEO01BQ0UsSUFBRztNQUNILE1BQUs7TUFDTCxhQUFZO01BQ1osV0FBVztNQUNYLE9BQU8sS0FBSyxPQUFPO01BQ25CLFVBQVUsS0FBSztNQUNmLFFBQVEsS0FBSztNQUNiLFNBQVMsUUFBUSxXQUFXLGFBQWEsQ0FBQztNQUMxQyxVQUFVLEtBQUs7S0FDaEI7Ozs7O0lBQ1E7Ozs7O0lBRVYsYUFDQyx3QkFBQyxPQUFEO0tBQUssV0FBVTtlQUNiLHdCQUFDLFFBQUQ7TUFDRSxJQUFHO01BQ0gsT0FBTTtNQUNOLGFBQVk7TUFDWixTQUFTLEtBQUssT0FBTztNQUNyQixXQUFXLFlBQVksS0FBSyxTQUFTLFVBQVUsT0FBTztNQUN0RCxVQUFVLEtBQUs7S0FDaEI7Ozs7O0lBQ0U7Ozs7O0dBRUg7Ozs7OztDQUNEOzs7O1dBRVAsd0JBQUMsZUFBRDtFQUNFLFFBQVE7RUFDUixPQUFPLFdBQVcsUUFBUSxRQUFRLFNBQVM7RUFDM0MsU0FBUTtFQUNSLGNBQWE7RUFDYjtFQUNBLGNBQWM7RUFDZCxXQUFXO0VBQ1gsZ0JBQWdCLHNCQUFzQixLQUFLO0NBQzVDOzs7O1NBQ0Q7Ozs7O0FBRU4iLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiRW50aXR5Rm9ybURpYWxvZy50c3giXSwidmVyc2lvbiI6Mywic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgdXNlQ2FsbGJhY2ssIHVzZU1lbW8sIHVzZVN0YXRlIH0gZnJvbSAncmVhY3QnO1xuaW1wb3J0IHsgQWxlcnQsIEJ1dHRvbiwgQ29uZmlybURpYWxvZywgRm9ybUZpZWxkLCBNb2RhbCwgU3dpdGNoLCBUZXh0SW5wdXQgfSBmcm9tICdAL2NvbXBvbmVudHMvdWknO1xuaW1wb3J0IHsgdXNlRW50aXRpZXMsIHVzZUZvcm0gfSBmcm9tICdAL2hvb2tzJztcbmltcG9ydCB0eXBlIHsgRm9ybUVycm9ycyB9IGZyb20gJ0AvaG9va3MnO1xuaW1wb3J0IHR5cGUgeyBSZXBvcnRpbmdFbnRpdHkgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCAnLi9FbnRpdHlGb3JtRGlhbG9nLmNzcyc7XG5cbmludGVyZmFjZSBFbnRpdHlGb3JtVmFsdWVzIGV4dGVuZHMgUmVjb3JkPHN0cmluZywgdW5rbm93bj4ge1xuICBuYW1lOiBzdHJpbmc7XG4gIGNvZGU6IHN0cmluZztcbiAgZGVzY3JpcHRpb246IHN0cmluZztcbiAgYWN0aXZlOiBib29sZWFuO1xufVxuXG5jb25zdCBDT0RFX1BBVFRFUk4gPSAvXltBLVphLXowLTktXSskLztcblxuZnVuY3Rpb24gdmFsaWRhdGUodmFsdWVzOiBFbnRpdHlGb3JtVmFsdWVzKTogRm9ybUVycm9yczxFbnRpdHlGb3JtVmFsdWVzPiB7XG4gIGNvbnN0IG5hbWUgPSB2YWx1ZXMubmFtZS50cmltKCk7XG4gIGNvbnN0IGNvZGUgPSB2YWx1ZXMuY29kZS50cmltKCk7XG5cbiAgcmV0dXJuIHtcbiAgICBuYW1lOlxuICAgICAgbmFtZS5sZW5ndGggPT09IDBcbiAgICAgICAgPyAnRW50aXR5IG5hbWUgaXMgcmVxdWlyZWQuJ1xuICAgICAgICA6IG5hbWUubGVuZ3RoIDwgMiB8fCBuYW1lLmxlbmd0aCA+IDEyMFxuICAgICAgICAgID8gJ0VudGl0eSBuYW1lIG11c3QgYmUgYmV0d2VlbiAyIGFuZCAxMjAgY2hhcmFjdGVycy4nXG4gICAgICAgICAgOiB1bmRlZmluZWQsXG4gICAgY29kZTpcbiAgICAgIGNvZGUubGVuZ3RoID09PSAwXG4gICAgICAgID8gJ0VudGl0eSBjb2RlIGlzIHJlcXVpcmVkLidcbiAgICAgICAgOiBjb2RlLmxlbmd0aCA+IDEyXG4gICAgICAgID8gJ0NvZGUgbXVzdCBiZSAxMiBjaGFyYWN0ZXJzIG9yIGZld2VyLidcbiAgICAgICAgOiAhQ09ERV9QQVRURVJOLnRlc3QoY29kZSlcbiAgICAgICAgICA/ICdDb2RlIG1heSBvbmx5IGNvbnRhaW4gbGV0dGVycywgbnVtYmVycyBhbmQgaHlwaGVucy4nXG4gICAgICAgICAgOiB1bmRlZmluZWQsXG4gICAgZGVzY3JpcHRpb246XG4gICAgICB2YWx1ZXMuZGVzY3JpcHRpb24udHJpbSgpLmxlbmd0aCA+IDUwMCA/ICdEZXNjcmlwdGlvbiBtdXN0IGJlIDUwMCBjaGFyYWN0ZXJzIG9yIGZld2VyLicgOiB1bmRlZmluZWQsXG4gIH07XG59XG5cbmludGVyZmFjZSBFbnRpdHlGb3JtRGlhbG9nUHJvcHMge1xuICBpc09wZW46IGJvb2xlYW47XG4gIC8qKiBUaGUgZW50aXR5IGJlaW5nIGVkaXRlZCwgb3IgbnVsbCB0byBjcmVhdGUgYSBuZXcgb25lLiAqL1xuICBlbnRpdHk6IFJlcG9ydGluZ0VudGl0eSB8IG51bGw7XG4gIG9uQ2xvc2U6ICgpID0+IHZvaWQ7XG4gIG9uU2F2ZWQ/OiAoZW50aXR5OiBSZXBvcnRpbmdFbnRpdHkpID0+IHZvaWQ7XG59XG5cbi8qKlxuICogQ3JlYXRlIG9yIGVkaXQgYW4gZW50aXR5LlxuICpcbiAqIE9uZSBkaWFsb2cgc2VydmVzIGJvdGggam9iczogdGhlIGZpZWxkcyBhcmUgaWRlbnRpY2FsLCBhbmQgc3BsaXR0aW5nIHRoZW0gd291bGQgbWVhblxuICogbWFpbnRhaW5pbmcgdGhlIHNhbWUgdmFsaWRhdGlvbiB0d2ljZS4gRWRpdGluZyBhZGRpdGlvbmFsbHkgb2ZmZXJzIGRlYWN0aXZhdGlvbiBhbmRcbiAqIGRlbGV0aW9uLCB0aGUgdHdvIGFjdGlvbnMgdGhhdCBvbmx5IG1ha2Ugc2Vuc2Ugb24gc29tZXRoaW5nIHRoYXQgYWxyZWFkeSBleGlzdHMuXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBFbnRpdHlGb3JtRGlhbG9nKHsgaXNPcGVuLCBlbnRpdHksIG9uQ2xvc2UsIG9uU2F2ZWQgfTogRW50aXR5Rm9ybURpYWxvZ1Byb3BzKSB7XG4gIGNvbnN0IHsgY3JlYXRlLCB1cGRhdGUsIHJlbW92ZSB9ID0gdXNlRW50aXRpZXMoKTtcbiAgY29uc3QgW2lzQ29uZmlybWluZ0RlbGV0ZSwgc2V0SXNDb25maXJtaW5nRGVsZXRlXSA9IHVzZVN0YXRlKGZhbHNlKTtcbiAgY29uc3QgW2lzRGVsZXRpbmcsIHNldElzRGVsZXRpbmddID0gdXNlU3RhdGUoZmFsc2UpO1xuICBjb25zdCBbZGVsZXRlRXJyb3IsIHNldERlbGV0ZUVycm9yXSA9IHVzZVN0YXRlPHN0cmluZyB8IG51bGw+KG51bGwpO1xuXG4gIGNvbnN0IGlzRWRpdGluZyA9IGVudGl0eSAhPT0gbnVsbDtcblxuICBjb25zdCBpbml0aWFsVmFsdWVzID0gdXNlTWVtbzxFbnRpdHlGb3JtVmFsdWVzPihcbiAgICAoKSA9PiAoe1xuICAgICAgbmFtZTogZW50aXR5Py5uYW1lID8/ICcnLFxuICAgICAgY29kZTogZW50aXR5Py5jb2RlID8/ICcnLFxuICAgICAgZGVzY3JpcHRpb246IGVudGl0eT8uZGVzY3JpcHRpb24gPz8gJycsXG4gICAgICBhY3RpdmU6IGVudGl0eT8uYWN0aXZlID8/IHRydWUsXG4gICAgfSksXG4gICAgW2VudGl0eV0sXG4gICk7XG5cbiAgY29uc3QgaGFuZGxlU3VibWl0ID0gdXNlQ2FsbGJhY2soXG4gICAgYXN5bmMgKHZhbHVlczogRW50aXR5Rm9ybVZhbHVlcykgPT4ge1xuICAgICAgY29uc3QgcGF5bG9hZCA9IHtcbiAgICAgICAgZ3JvdXBJZDogZW50aXR5Py5ncm91cElkID8/ICcnLFxuICAgICAgICBwcmltYXJ5QnJhbmNoTmFtZTogJycsXG4gICAgICAgIG5hbWU6IHZhbHVlcy5uYW1lLnRyaW0oKSxcbiAgICAgICAgY29kZTogdmFsdWVzLmNvZGUudHJpbSgpLnRvVXBwZXJDYXNlKCksXG4gICAgICAgIGRlc2NyaXB0aW9uOiB2YWx1ZXMuZGVzY3JpcHRpb24udHJpbSgpLFxuICAgICAgICBwYW46IGVudGl0eT8ucGFuID8/ICcnLFxuICAgICAgICBwcmltYXJ5R3N0aW46IGVudGl0eT8ucHJpbWFyeUdzdGluID8/ICcnLFxuICAgICAgICBnc3RuVXNlcm5hbWU6IGVudGl0eT8uZ3N0blVzZXJuYW1lID8/ICcnLFxuICAgICAgICBnc3RuUGFzc3dvcmQ6ICcnLFxuICAgICAgICB0YWxseUNvbXBhbnlOYW1lOiBlbnRpdHk/LnRhbGx5Q29tcGFueU5hbWUgPz8gJycsXG4gICAgICAgIHRhbGx5SG9zdDogZW50aXR5Py50YWxseUhvc3QgPz8gJ2xvY2FsaG9zdCcsXG4gICAgICAgIHRhbGx5UG9ydDogZW50aXR5Py50YWxseVBvcnQgPz8gOTAwMCxcbiAgICAgICAgYWN0aXZlOiB2YWx1ZXMuYWN0aXZlLFxuICAgICAgICBtdWx0aXBsZUJyYW5jaGVzOiBlbnRpdHk/Lm11bHRpcGxlQnJhbmNoZXMgPz8gZmFsc2UsXG4gICAgICAgIGVJbnZvaWNlRW5hYmxlZDogZW50aXR5Py5lSW52b2ljZUVuYWJsZWQgPz8gZmFsc2UsXG4gICAgICAgIGVXYXlCaWxsRW5hYmxlZDogZW50aXR5Py5lV2F5QmlsbEVuYWJsZWQgPz8gZmFsc2UsXG4gICAgICAgIHN0b2NrRW5hYmxlZDogZW50aXR5Py5zdG9ja0VuYWJsZWQgPz8gZmFsc2UsXG4gICAgICAgIGNvc3RDZW50cmVFeHRyYWN0aW9uRW5hYmxlZDogZW50aXR5Py5jb3N0Q2VudHJlRXh0cmFjdGlvbkVuYWJsZWQgPz8gZmFsc2UsXG4gICAgICB9O1xuXG4gICAgICBjb25zdCBzYXZlZCA9IGlzRWRpdGluZ1xuICAgICAgICA/IGF3YWl0IHVwZGF0ZShlbnRpdHkuaWQsIHBheWxvYWQpXG4gICAgICAgIDogYXdhaXQgY3JlYXRlKHBheWxvYWQpO1xuXG4gICAgICBvblNhdmVkPy4oc2F2ZWQpO1xuICAgICAgb25DbG9zZSgpO1xuICAgIH0sXG4gICAgW2NyZWF0ZSwgZW50aXR5LCBpc0VkaXRpbmcsIG9uQ2xvc2UsIG9uU2F2ZWQsIHVwZGF0ZV0sXG4gICk7XG5cbiAgY29uc3QgZm9ybSA9IHVzZUZvcm08RW50aXR5Rm9ybVZhbHVlcz4oe1xuICAgIGluaXRpYWxWYWx1ZXMsXG4gICAgdmFsaWRhdGUsXG4gICAgb25TdWJtaXQ6IGhhbmRsZVN1Ym1pdCxcbiAgfSk7XG5cbiAgY29uc3QgZmllbGRFcnJvciA9IChmaWVsZDoga2V5b2YgRW50aXR5Rm9ybVZhbHVlcyAmIHN0cmluZykgPT5cbiAgICBmb3JtLnRvdWNoZWRbZmllbGRdID8gZm9ybS5lcnJvcnNbZmllbGRdIDogdW5kZWZpbmVkO1xuXG4gIGNvbnN0IGhhbmRsZURlbGV0ZSA9IHVzZUNhbGxiYWNrKCgpID0+IHtcbiAgICBpZiAoIWVudGl0eSkge1xuICAgICAgcmV0dXJuO1xuICAgIH1cbiAgICBzZXRJc0RlbGV0aW5nKHRydWUpO1xuICAgIHNldERlbGV0ZUVycm9yKG51bGwpO1xuXG4gICAgdm9pZCByZW1vdmUoZW50aXR5LmlkKVxuICAgICAgLnRoZW4oKCkgPT4ge1xuICAgICAgICBzZXRJc0NvbmZpcm1pbmdEZWxldGUoZmFsc2UpO1xuICAgICAgICBvbkNsb3NlKCk7XG4gICAgICB9KVxuICAgICAgLmNhdGNoKCgpID0+IHNldERlbGV0ZUVycm9yKCdVbmFibGUgdG8gZGVsZXRlIHRoaXMgZW50aXR5LiBQbGVhc2UgdHJ5IGFnYWluLicpKVxuICAgICAgLmZpbmFsbHkoKCkgPT4gc2V0SXNEZWxldGluZyhmYWxzZSkpO1xuICB9LCBbZW50aXR5LCBvbkNsb3NlLCByZW1vdmVdKTtcblxuICByZXR1cm4gKFxuICAgIDw+XG4gICAgICA8TW9kYWxcbiAgICAgICAgaXNPcGVuPXtpc09wZW4gJiYgIWlzQ29uZmlybWluZ0RlbGV0ZX1cbiAgICAgICAgc2l6ZT1cIm1kXCJcbiAgICAgICAgdGl0bGU9e2lzRWRpdGluZyA/ICdFZGl0IGVudGl0eScgOiAnQWRkIGVudGl0eSd9XG4gICAgICAgIGRlc2NyaXB0aW9uPXtcbiAgICAgICAgICBpc0VkaXRpbmdcbiAgICAgICAgICAgID8gJ1VwZGF0ZSB0aGUgZGV0YWlscyBvZiB0aGlzIGVudGl0eS4nXG4gICAgICAgICAgICA6ICdBZGQgYSBidXNpbmVzcyB5b3UgcmVwb3J0IG9uLiBZb3UgY2FuIHN3aXRjaCBiZXR3ZWVuIGVudGl0aWVzIGF0IGFueSB0aW1lLidcbiAgICAgICAgfVxuICAgICAgICBvbkNsb3NlPXtvbkNsb3NlfVxuICAgICAgICBmb290ZXI9e1xuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZW50aXR5LWZvcm1fX2FjdGlvbnNcIj5cbiAgICAgICAgICAgIHtpc0VkaXRpbmcgJiYgKFxuICAgICAgICAgICAgICA8QnV0dG9uXG4gICAgICAgICAgICAgICAgdHlwZT1cImJ1dHRvblwiXG4gICAgICAgICAgICAgICAgdmFyaWFudD1cImdob3N0XCJcbiAgICAgICAgICAgICAgICBjbGFzc05hbWU9XCJlbnRpdHktZm9ybV9fZGVsZXRlXCJcbiAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBzZXRJc0NvbmZpcm1pbmdEZWxldGUodHJ1ZSl9XG4gICAgICAgICAgICAgID5cbiAgICAgICAgICAgICAgICBEZWxldGVcbiAgICAgICAgICAgICAgPC9CdXR0b24+XG4gICAgICAgICAgICApfVxuICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJlbnRpdHktZm9ybV9fYWN0aW9ucy1lbmRcIj5cbiAgICAgICAgICAgICAgPEJ1dHRvbiB0eXBlPVwiYnV0dG9uXCIgdmFyaWFudD1cInNlY29uZGFyeVwiIG9uQ2xpY2s9e29uQ2xvc2V9IGRpc2FibGVkPXtmb3JtLmlzU3VibWl0dGluZ30+XG4gICAgICAgICAgICAgICAgQ2FuY2VsXG4gICAgICAgICAgICAgIDwvQnV0dG9uPlxuICAgICAgICAgICAgICA8QnV0dG9uIHR5cGU9XCJzdWJtaXRcIiBmb3JtPVwiZW50aXR5LWZvcm1cIiBpc0xvYWRpbmc9e2Zvcm0uaXNTdWJtaXR0aW5nfT5cbiAgICAgICAgICAgICAgICB7aXNFZGl0aW5nID8gJ1NhdmUgY2hhbmdlcycgOiAnQWRkIGVudGl0eSd9XG4gICAgICAgICAgICAgIDwvQnV0dG9uPlxuICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgIH1cbiAgICAgID5cbiAgICAgICAgPGZvcm0gaWQ9XCJlbnRpdHktZm9ybVwiIGNsYXNzTmFtZT1cImVudGl0eS1mb3JtXCIgb25TdWJtaXQ9e2Zvcm0uaGFuZGxlU3VibWl0fSBub1ZhbGlkYXRlPlxuICAgICAgICAgIHtmb3JtLmZvcm1FcnJvciAmJiA8QWxlcnQgdmFyaWFudD1cImRhbmdlclwiPntmb3JtLmZvcm1FcnJvcn08L0FsZXJ0Pn1cbiAgICAgICAgICB7ZGVsZXRlRXJyb3IgJiYgPEFsZXJ0IHZhcmlhbnQ9XCJkYW5nZXJcIj57ZGVsZXRlRXJyb3J9PC9BbGVydD59XG5cbiAgICAgICAgICA8Rm9ybUZpZWxkIGh0bWxGb3I9XCJlbnRpdHktbmFtZVwiIGxhYmVsPVwiRW50aXR5IG5hbWVcIiBlcnJvcj17ZmllbGRFcnJvcignbmFtZScpfSByZXF1aXJlZD5cbiAgICAgICAgICAgIDxUZXh0SW5wdXRcbiAgICAgICAgICAgICAgaWQ9XCJlbnRpdHktbmFtZVwiXG4gICAgICAgICAgICAgIG5hbWU9XCJuYW1lXCJcbiAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9XCJBY21lIFByaXZhdGUgTGltaXRlZFwiXG4gICAgICAgICAgICAgIHZhbHVlPXtmb3JtLnZhbHVlcy5uYW1lfVxuICAgICAgICAgICAgICBvbkNoYW5nZT17Zm9ybS5oYW5kbGVDaGFuZ2V9XG4gICAgICAgICAgICAgIG9uQmx1cj17Zm9ybS5oYW5kbGVCbHVyfVxuICAgICAgICAgICAgICBpbnZhbGlkPXtCb29sZWFuKGZpZWxkRXJyb3IoJ25hbWUnKSl9XG4gICAgICAgICAgICAgIGRpc2FibGVkPXtmb3JtLmlzU3VibWl0dGluZ31cbiAgICAgICAgICAgICAgYXV0b0ZvY3VzXG4gICAgICAgICAgICAvPlxuICAgICAgICAgIDwvRm9ybUZpZWxkPlxuXG4gICAgICAgICAgPEZvcm1GaWVsZFxuICAgICAgICAgICAgaHRtbEZvcj1cImVudGl0eS1jb2RlXCJcbiAgICAgICAgICAgIGxhYmVsPVwiRW50aXR5IGNvZGVcIlxuICAgICAgICAgICAgZXJyb3I9e2ZpZWxkRXJyb3IoJ2NvZGUnKX1cbiAgICAgICAgICAgIGhpbnQ9XCJSZXF1aXJlZC4gU2hvd24gd2hlcmUgdGhlIGZ1bGwgbmFtZSB3aWxsIG5vdCBmaXQsIGZvciBleGFtcGxlIEFDTUUuXCJcbiAgICAgICAgICAgIHJlcXVpcmVkXG4gICAgICAgICAgPlxuICAgICAgICAgICAgPFRleHRJbnB1dFxuICAgICAgICAgICAgICBpZD1cImVudGl0eS1jb2RlXCJcbiAgICAgICAgICAgICAgbmFtZT1cImNvZGVcIlxuICAgICAgICAgICAgICBwbGFjZWhvbGRlcj1cIkFDTUVcIlxuICAgICAgICAgICAgICBtYXhMZW5ndGg9ezEyfVxuICAgICAgICAgICAgICB2YWx1ZT17Zm9ybS52YWx1ZXMuY29kZX1cbiAgICAgICAgICAgICAgb25DaGFuZ2U9e2Zvcm0uaGFuZGxlQ2hhbmdlfVxuICAgICAgICAgICAgICBvbkJsdXI9e2Zvcm0uaGFuZGxlQmx1cn1cbiAgICAgICAgICAgICAgaW52YWxpZD17Qm9vbGVhbihmaWVsZEVycm9yKCdjb2RlJykpfVxuICAgICAgICAgICAgICBkaXNhYmxlZD17Zm9ybS5pc1N1Ym1pdHRpbmd9XG4gICAgICAgICAgICAvPlxuICAgICAgICAgIDwvRm9ybUZpZWxkPlxuXG4gICAgICAgICAgPEZvcm1GaWVsZFxuICAgICAgICAgICAgaHRtbEZvcj1cImVudGl0eS1kZXNjcmlwdGlvblwiXG4gICAgICAgICAgICBsYWJlbD1cIkRlc2NyaXB0aW9uXCJcbiAgICAgICAgICAgIGVycm9yPXtmaWVsZEVycm9yKCdkZXNjcmlwdGlvbicpfVxuICAgICAgICAgICAgaGludD1cIk9wdGlvbmFsLiBBIG5vdGUgYWJvdXQgd2hhdCB0aGlzIGVudGl0eSBjb3ZlcnMuXCJcbiAgICAgICAgICA+XG4gICAgICAgICAgICA8VGV4dElucHV0XG4gICAgICAgICAgICAgIGlkPVwiZW50aXR5LWRlc2NyaXB0aW9uXCJcbiAgICAgICAgICAgICAgbmFtZT1cImRlc2NyaXB0aW9uXCJcbiAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9XCJQcmltYXJ5IHRyYWRpbmcgY29tcGFueVwiXG4gICAgICAgICAgICAgIG1heExlbmd0aD17NTAwfVxuICAgICAgICAgICAgICB2YWx1ZT17Zm9ybS52YWx1ZXMuZGVzY3JpcHRpb259XG4gICAgICAgICAgICAgIG9uQ2hhbmdlPXtmb3JtLmhhbmRsZUNoYW5nZX1cbiAgICAgICAgICAgICAgb25CbHVyPXtmb3JtLmhhbmRsZUJsdXJ9XG4gICAgICAgICAgICAgIGludmFsaWQ9e0Jvb2xlYW4oZmllbGRFcnJvcignZGVzY3JpcHRpb24nKSl9XG4gICAgICAgICAgICAgIGRpc2FibGVkPXtmb3JtLmlzU3VibWl0dGluZ31cbiAgICAgICAgICAgIC8+XG4gICAgICAgICAgPC9Gb3JtRmllbGQ+XG5cbiAgICAgICAgICB7aXNFZGl0aW5nICYmIChcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZW50aXR5LWZvcm1fX3N3aXRjaFwiPlxuICAgICAgICAgICAgICA8U3dpdGNoXG4gICAgICAgICAgICAgICAgaWQ9XCJlbnRpdHktYWN0aXZlXCJcbiAgICAgICAgICAgICAgICBsYWJlbD1cIkFjdGl2ZVwiXG4gICAgICAgICAgICAgICAgZGVzY3JpcHRpb249XCJJbmFjdGl2ZSBlbnRpdGllcyBhcmUga2VwdCBvbiByZWNvcmQgYnV0IGNhbm5vdCBiZSBzZWxlY3RlZC5cIlxuICAgICAgICAgICAgICAgIGNoZWNrZWQ9e2Zvcm0udmFsdWVzLmFjdGl2ZX1cbiAgICAgICAgICAgICAgICBvbkNoYW5nZT17KGNoZWNrZWQpID0+IGZvcm0uc2V0VmFsdWUoJ2FjdGl2ZScsIGNoZWNrZWQpfVxuICAgICAgICAgICAgICAgIGRpc2FibGVkPXtmb3JtLmlzU3VibWl0dGluZ31cbiAgICAgICAgICAgICAgLz5cbiAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICl9XG4gICAgICAgIDwvZm9ybT5cbiAgICAgIDwvTW9kYWw+XG5cbiAgICAgIDxDb25maXJtRGlhbG9nXG4gICAgICAgIGlzT3Blbj17aXNDb25maXJtaW5nRGVsZXRlfVxuICAgICAgICB0aXRsZT17YEFyY2hpdmUgJHtlbnRpdHk/Lm5hbWUgPz8gJ2VudGl0eSd9P2B9XG4gICAgICAgIG1lc3NhZ2U9XCJUaGUgZW50aXR5IGlzIGFyY2hpdmVkIHdoaWxlIGl0cyBoaXN0b3JpY2FsIHJlbGF0aW9uc2hpcHMgcmVtYWluIGludGFjdC5cIlxuICAgICAgICBjb25maXJtTGFiZWw9XCJBcmNoaXZlIGVudGl0eVwiXG4gICAgICAgIGlzRGVzdHJ1Y3RpdmVcbiAgICAgICAgaXNDb25maXJtaW5nPXtpc0RlbGV0aW5nfVxuICAgICAgICBvbkNvbmZpcm09e2hhbmRsZURlbGV0ZX1cbiAgICAgICAgb25DYW5jZWw9eygpID0+IHNldElzQ29uZmlybWluZ0RlbGV0ZShmYWxzZSl9XG4gICAgICAvPlxuICAgIDwvPlxuICApO1xufVxuIl19

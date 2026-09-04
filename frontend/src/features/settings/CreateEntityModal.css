@@ -1,0 +1,8 @@
+.create-entity-modal-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.create-entity-modal-form__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.create-entity-modal-form__options { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-5); padding: var(--space-4); background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
+
+@media (max-width: 620px) {
+  .create-entity-modal-form__grid { grid-template-columns: 1fr; }
+  .create-entity-modal-form__options { flex-direction: column; }
+}
