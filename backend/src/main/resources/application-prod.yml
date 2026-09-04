@@ -13,3 +13,9 @@ spring:
 
 server:
   port: ${PORT:10000}
+
+app:
+  cors:
+    allowed-origins:
+      - https://custom-reporting-frontend.vercel.app
+      - https://custom-reporting-frontend-35xai1iny-gouthamijchpl-webs-projects.vercel.app
