@@ -1,4 +1,4 @@
-# Production: every secret and connection detail comes from the environment.
+git status# Production: every secret and connection detail comes from the environment.
 # The application refuses to start if a required variable is missing.
 spring:
   datasource:
