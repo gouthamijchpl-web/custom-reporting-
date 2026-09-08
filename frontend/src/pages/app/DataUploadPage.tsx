@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
+import { uploadApi } from '@/api';
 import { PlusIcon, SearchIcon, UploadIcon } from '@/components/icons';
 import { Badge, Button, Modal, PageHeader, TextInput } from '@/components/ui';
 import {
@@ -7,7 +8,7 @@ import {
 } from '@/features/uploads/inventoryImport';
 import type { ImportedInventoryFile, ImportContext, ImportKind, ImportRow, LegacyImportedFile } from '@/features/uploads/inventoryImport';
 import { invalidateDailySalesCategorySource } from '@/features/reports/dailySalesCategoryReport';
-import { useBranches, useEntities } from '@/hooks';
+import { useBranches, useCloudPreference, useEntities } from '@/hooks';
 import { cx } from '@/utils/classNames';
 import './DataUploadPage.css';
 
@@ -38,7 +39,7 @@ const MAX_PREVIEW_ROWS = 200;
 const UPLOAD_DATABASE_NAME = 'custom-reporting-uploads';
 const UPLOAD_STORE_NAME = 'entity-uploads';
 
-function openUploadDatabase(): Promise<IDBDatabase> {
+function openLegacyUploadDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open(UPLOAD_DATABASE_NAME, 1);
     request.onupgradeneeded = () => {
@@ -76,11 +77,11 @@ function refreshDuplicateStatuses(value: UploadsByType): UploadsByType {
   const files = markFileDuplicates(UPLOAD_TYPES.flatMap(({ id }) => value[id] ?? []));
   return Object.fromEntries(UPLOAD_TYPES.map(({ id }) => [id, files.filter((file) => file.kind === id)])) as UploadsByType;
 }
-async function loadEntityUploads(entityId: string, context: ImportContext): Promise<LoadedEntityUploads> {
-  const database = await openUploadDatabase();
+async function loadLegacyEntityUploads(scopeId: string, context: ImportContext): Promise<LoadedEntityUploads> {
+  const database = await openLegacyUploadDatabase();
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(UPLOAD_STORE_NAME, 'readonly');
-    const request = transaction.objectStore(UPLOAD_STORE_NAME).get(entityId);
+    const request = transaction.objectStore(UPLOAD_STORE_NAME).get(scopeId);
     request.onsuccess = () => {
       const stored = request.result as StoredEntityUploads | undefined;
       resolve({
@@ -92,15 +93,36 @@ async function loadEntityUploads(entityId: string, context: ImportContext): Prom
     transaction.onerror = () => { database.close(); reject(transaction.error ?? new Error('Unable to restore uploaded files.')); };
   });
 }
-async function saveEntityUploads(entityId: string, uploadsByType: UploadsByType): Promise<void> {
-  const database = await openUploadDatabase();
+async function deleteLegacyEntityUploads(scopeId: string): Promise<void> {
+  const database = await openLegacyUploadDatabase();
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(UPLOAD_STORE_NAME, 'readwrite');
-    const storedRecord: StoredEntityUploads = { entityId, uploadsByType };
-    transaction.objectStore(UPLOAD_STORE_NAME).put(storedRecord);
-    transaction.oncomplete = () => { database.close(); invalidateDailySalesCategorySource(entityId); resolve(); };
-    transaction.onerror = () => { database.close(); reject(transaction.error ?? new Error('Unable to save uploaded files.')); };
+    transaction.objectStore(UPLOAD_STORE_NAME).delete(scopeId);
+    transaction.oncomplete = () => { database.close(); resolve(); };
+    transaction.onerror = () => { database.close(); reject(transaction.error ?? new Error('Unable to clear migrated browser data.')); };
   });
+}
+function hasUploads(value: UploadsByType): boolean {
+  return UPLOAD_TYPES.some(({ id }) => (value[id]?.length ?? 0) > 0);
+}
+async function loadEntityUploads(scopeId: string, entityId: string, branchId: string | null,
+                                 context: ImportContext): Promise<LoadedEntityUploads> {
+  const cloud = await uploadApi.load<UploadsByType>(entityId, branchId);
+  const uploadsByType = refreshDuplicateStatuses(sanitizeUploads(cloud.uploadsByType, context));
+  if (hasUploads(uploadsByType)) return { uploadsByType };
+
+  // One-time compatibility path: copy data created by older builds from this browser to
+  // Supabase. The local record is removed only after the cloud write succeeds.
+  const legacy = await loadLegacyEntityUploads(scopeId, context).catch(() => ({ uploadsByType: {} }));
+  if (!hasUploads(legacy.uploadsByType)) return { uploadsByType };
+  await uploadApi.save(entityId, branchId, legacy.uploadsByType);
+  await deleteLegacyEntityUploads(scopeId);
+  return legacy;
+}
+async function saveEntityUploads(scopeId: string, entityId: string, branchId: string | null,
+                                 uploadsByType: UploadsByType): Promise<void> {
+  await uploadApi.save(entityId, branchId, uploadsByType);
+  invalidateDailySalesCategorySource(scopeId);
 }
 function getUploadType(id: UploadType) { return UPLOAD_TYPES.find((type) => type.id === id) ?? UPLOAD_TYPES[0]; }
 function formatFileSize(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`; }
@@ -197,9 +219,11 @@ export function DataUploadPage() {
   const importRequestRef = useRef(0);
   const storageRequestRef = useRef(0);
   const storageSaveChainRef = useRef<Promise<void>>(Promise.resolve());
+  const skipNextSaveScopeRef = useRef<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [activeType, setActiveType] = useState<UploadType>('sales');
-  const [visibleType, setVisibleType] = useState<UploadType>('opening-stock');
+  const [storedVisibleType, setVisibleType] = useCloudPreference<UploadType>('uploads.visible-type', 'opening-stock');
+  const visibleType = UPLOAD_TYPES.some(({ id }) => id === storedVisibleType) ? storedVisibleType : 'opening-stock';
   const [fileError, setFileError] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -222,19 +246,28 @@ export function DataUploadPage() {
     const requestId = ++storageRequestRef.current;
     if (!uploadScopeId) return;
     if (!selectedEntity) return;
-    void loadEntityUploads(uploadScopeId, { entity: selectedEntity, branch: selectedBranch }).then((stored) => {
+    void loadEntityUploads(uploadScopeId, selectedEntity.id, selectedBranch?.id ?? null,
+      { entity: selectedEntity, branch: selectedBranch }).then((stored) => {
       if (storageRequestRef.current !== requestId) return;
+      skipNextSaveScopeRef.current = uploadScopeId;
       setUploadsByType(stored.uploadsByType); setLoadedScopeId(uploadScopeId); setStorageAvailableScopeId(uploadScopeId); setStorageIssue(null);
     }).catch(() => {
       if (storageRequestRef.current !== requestId) return;
       setUploadsByType({}); setLoadedScopeId(uploadScopeId); setStorageAvailableScopeId(null);
-      setStorageIssue({ scopeId: uploadScopeId, message: 'Uploaded files could not be restored in this browser.' });
+      setStorageIssue({ scopeId: uploadScopeId, message: 'Uploaded files could not be loaded from Supabase.' });
     });
   }, [selectedBranch, selectedEntity, uploadScopeId]);
   useEffect(() => {
     if (!uploadScopeId || storageAvailableScopeId !== uploadScopeId) return;
-    storageSaveChainRef.current = storageSaveChainRef.current.catch(() => undefined).then(() => saveEntityUploads(uploadScopeId, uploadsByType)).catch(() => setStorageIssue({ scopeId: uploadScopeId, message: 'Uploaded files could not be saved for the next refresh.' }));
-  }, [storageAvailableScopeId, uploadScopeId, uploadsByType]);
+    if (skipNextSaveScopeRef.current === uploadScopeId) {
+      skipNextSaveScopeRef.current = null;
+      return;
+    }
+    if (!selectedEntity) return;
+    storageSaveChainRef.current = storageSaveChainRef.current.catch(() => undefined)
+      .then(() => saveEntityUploads(uploadScopeId, selectedEntity.id, selectedBranch?.id ?? null, uploadsByType))
+      .catch(() => setStorageIssue({ scopeId: uploadScopeId, message: 'Uploaded files could not be saved to Supabase.' }));
+  }, [selectedBranch, selectedEntity, storageAvailableScopeId, uploadScopeId, uploadsByType]);
 
   const resetWorkflow = () => { importRequestRef.current += 1; setActiveType('sales'); setFileError(null); setImportLoading(false); setDragging(false); setReplaceUploadId(null); };
   const openCreate = (uploadType: UploadType) => { resetWorkflow(); setActiveType(uploadType); setCreateOpen(true); };

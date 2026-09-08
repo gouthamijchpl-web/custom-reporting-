@@ -65,6 +65,78 @@ export function ReportsIcon(props: IconProps) {
   );
 }
 
+export function CategoryChartIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5H12Z" />
+      <path d="M15.5 3.8v4.7h4.7a8.5 8.5 0 0 0-4.7-4.7Z" />
+    </Icon>
+  );
+}
+
+export function AnalyticsIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 3v16.5A1.5 1.5 0 0 0 4.5 21H21" />
+      <path d="m6.5 15 3.3-3.5 3.1 2.4 4.8-6" />
+      <path d="M15 7.9h2.7v2.7" />
+    </Icon>
+  );
+}
+
+export function ComparisonIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 18.5V14h4v4.5" />
+      <path d="M10 18.5V9h4v9.5" />
+      <path d="M16 18.5V5h4v13.5" />
+      <path d="M3 21h18" />
+      <path d="m4.5 10 4-3.2 3.4 1.8 6.3-5" />
+    </Icon>
+  );
+}
+
+export function CalendarReportIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M7 3v4M17 3v4M3 9.5h18" />
+      <path d="M7 14h3M7 17h6" />
+    </Icon>
+  );
+}
+
+export function ProfitIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="9" cy="12" r="6" />
+      <path d="M7 8.5h4M7 11h4M8.5 8.5c2.8 0 2.8 4.2 0 4.2H7l4 3" />
+      <path d="m15 7 2.2-2.2L19.5 7M17.2 5v7.5" />
+    </Icon>
+  );
+}
+
+export function InventoryClockIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m4 7 8-4 8 4-8 4Z" />
+      <path d="M4 7v9l5 2.5M20 7v4" />
+      <path d="M12 11v4" />
+      <circle cx="16.5" cy="17" r="4.5" />
+      <path d="M16.5 14.8V17l1.5 1" />
+    </Icon>
+  );
+}
+
+export function FinancialReportIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 3h8l4 4v14H6Z" />
+      <path d="M14 3v5h4M9 17v-3M12 17v-6M15 17v-4" />
+    </Icon>
+  );
+}
+
 export function SettingsIcon(props: IconProps) {
   return (
     <Icon {...props}>

@@ -1,18 +1,28 @@
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useTransition } from 'react';
 import {
+  AnalyticsIcon,
+  CalendarReportIcon,
+  CategoryChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ComparisonIcon,
+  FinancialReportIcon,
+  InventoryClockIcon,
+  ProfitIcon,
   ReportsIcon,
+  ShieldIcon,
+  UsersIcon,
 } from '@/components/icons';
 import { Badge, PageHeader } from '@/components/ui';
 import { DailySalesCategoryDashboard } from '@/features/reports/DailySalesCategoryDashboard';
 import { DailySalesStyleDashboard } from '@/features/reports/DailySalesStyleDashboard';
 import { MonthlyCategoryDashboard } from '@/features/reports/MonthlyCategoryDashboard';
+import { MisCogsDashboard } from '@/features/reports/MisCogsDashboard';
 import { SkuProfitabilityDashboard } from '@/features/reports/SkuProfitabilityDashboard';
 import { StockAgeingDashboard } from '@/features/reports/StockAgeingDashboard';
 import { StyleSalesPurchaseAnalysisDashboard } from '@/features/reports/StyleSalesPurchaseAnalysisDashboard';
 import { loadDailySalesCategorySource } from '@/features/reports/dailySalesCategoryReport';
-import { useBranches, useEntities } from '@/hooks';
+import { useBranches, useCloudPreference, useEntities } from '@/hooks';
 import './ReportsPage.css';
 
 type ReportPhase = 'phase-1' | 'phase-2';
@@ -44,11 +54,31 @@ function phaseLabel(phase: ReportPhase): string {
   return phase === 'phase-1' ? 'Phase - 1' : 'Phase - 2';
 }
 
+function phaseBadgeLabel(phase: ReportPhase): string {
+  return phase === 'phase-1' ? 'Phase 1' : 'Phase 2';
+}
+
+const REPORT_ICONS = {
+  'daily-sales-category': CategoryChartIcon,
+  'daily-sales-style': AnalyticsIcon,
+  'style-sales-purchase': ComparisonIcon,
+  'monthly-category': CalendarReportIcon,
+  'sku-profitability': ProfitIcon,
+  'stock-ageing': InventoryClockIcon,
+  'mis-cogs': FinancialReportIcon,
+  'debtors-ageing': InventoryClockIcon,
+  'weekly-collections': CalendarReportIcon,
+  'target-customer-ageing': UsersIcon,
+  'cheques-tracker': FinancialReportIcon,
+  'risk-covered-debtors': ShieldIcon,
+} as const;
+
 export function ReportsPage() {
   const { selectedEntity } = useEntities();
   const { status: branchStatus, selectableBranches, selectedBranch } = useBranches();
-  const [activePhase, setActivePhase] = useState<ReportPhase>('phase-1');
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [storedPhase, setActivePhase] = useCloudPreference<ReportPhase>('reports.active-phase', 'phase-1');
+  const activePhase: ReportPhase = storedPhase === 'phase-2' ? 'phase-2' : 'phase-1';
+  const [selectedReportId, setSelectedReportId] = useCloudPreference<string | null>('reports.selected-report', null);
   const [isNavigationPending, startNavigation] = useTransition();
   const scopeId = selectedEntity && branchStatus === 'ready'
     ? selectableBranches.length === 0 ? selectedEntity.id : selectedBranch ? `${selectedEntity.id}:branch:${selectedBranch.id}` : null
@@ -78,7 +108,6 @@ export function ReportsPage() {
       <button type="button" className="reports-back" onClick={() => startNavigation(() => setSelectedReportId(null))}><ChevronLeftIcon size={16} />Back to Reports</button>
       <PageHeader
         title={selectedReport.reportName}
-        description={selectedReport.description}
         actions={<Badge tone="accent" className="report-detail__phase-badge">{phaseLabel(selectedReport.phase)}</Badge>}
       />
       {selectedReport.id === 'daily-sales-category' && <DailySalesCategoryDashboard />}
@@ -87,6 +116,7 @@ export function ReportsPage() {
       {selectedReport.id === 'monthly-category' && <MonthlyCategoryDashboard />}
       {selectedReport.id === 'sku-profitability' && <SkuProfitabilityDashboard />}
       {selectedReport.id === 'stock-ageing' && <StockAgeingDashboard />}
+      {selectedReport.id === 'mis-cogs' && <MisCogsDashboard />}
     </div>;
   }
 
@@ -113,12 +143,23 @@ export function ReportsPage() {
 
     <section id={`${activePhase}-panel`} className="report-phase" role="tabpanel" aria-labelledby={`${activePhase}-tab`}>
       <div className="report-card-grid">{visibleReports.map((report) => {
+          const ReportIcon = REPORT_ICONS[report.id as keyof typeof REPORT_ICONS] ?? ReportsIcon;
           return <article className="report-card" key={report.id}>
-            <button type="button" className="report-card__open" onClick={() => startNavigation(() => setSelectedReportId(report.id))}>
-              <span className="report-card__top"><span className="report-card__icon"><ReportsIcon size={19} /></span></span>
-              <span className="report-card__content"><strong>{report.reportName}</strong><span>{report.description}</span></span>
+            <button
+              type="button"
+              className="report-card__open"
+              aria-label={`Open ${report.reportName}`}
+              onClick={() => startNavigation(() => setSelectedReportId(report.id))}
+            >
+              <span className="report-card__icon"><ReportIcon size={18} /></span>
+              <span className="report-card__content">
+                <strong>{report.reportName}</strong>
+              </span>
+              <span className="report-card__meta">
+                <span className="report-card__phase">{phaseBadgeLabel(report.phase)}</span>
+                <ChevronRightIcon className="report-card__arrow" size={17} />
+              </span>
             </button>
-            <footer className="report-card__footer"><button type="button" className="report-card__details" onClick={() => startNavigation(() => setSelectedReportId(report.id))}>Open details<ChevronRightIcon size={16} /></button></footer>
           </article>;
         })}</div>
     </section>

@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircleIcon, SearchIcon } from '@/components/icons';
 import { Alert, Badge, Button, LoadingState, Select, TextInput } from '@/components/ui';
-import { useBranches, useEntities } from '@/hooks';
+import { useBranches, useCloudPreference, useEntities } from '@/hooks';
 import { loadDailySalesCategorySource } from './dailySalesCategoryReport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
 import {
@@ -10,6 +10,7 @@ import {
   financialYearStartYearFor,
 } from './monthlyCategoryReport';
 import type { MonthlyCategoryRow } from './monthlyCategoryReport';
+import { TableDownloadButton } from './TableDownloadButton';
 import './DailySalesCategoryDashboard.css';
 import './MonthlyCategoryDashboard.css';
 
@@ -98,7 +99,8 @@ export function MonthlyCategoryDashboard() {
   const [loadState, setLoadState] = useState<ReportLoadState | null>(null);
   const [selectedYear, setSelectedYear] = useState(currentFinancialYear);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(() => defaultMonthIndex(currentFinancialYear));
-  const [showAllMonths, setShowAllMonths] = useState(false);
+  const [showAllMonths, setShowAllMonths] = useCloudPreference('reports.monthly-category.all-months', false);
+  const [renderAllMonths, setRenderAllMonths] = useState(showAllMonths);
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [sortColumn, setSortColumn] = useState<SortKey>('category');
@@ -116,7 +118,7 @@ export function MonthlyCategoryDashboard() {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be read from this browser.' });
+        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be loaded from Supabase.' });
       });
   }, [currentFinancialYear, scopeId, selectedBranch, selectedEntity]);
 
@@ -162,6 +164,15 @@ export function MonthlyCategoryDashboard() {
     setSelectedMonthIndex(Number(value));
     setQuery('');
   };
+  const handleAllMonthsToggle = () => {
+    if (showAllMonths) {
+      setRenderAllMonths(true);
+      setShowAllMonths(false);
+      return;
+    }
+    setRenderAllMonths(true);
+    setShowAllMonths(true);
+  };
 
   if (!selectedEntity) return <Alert variant="info" title="Select an entity">Choose an active entity from the top bar to view this report.</Alert>;
   if (branchStatus === 'loading' || (scopeId && loadState?.scopeId !== scopeId)) return <LoadingState message="Preparing monthly category-wise report…" />;
@@ -179,7 +190,7 @@ export function MonthlyCategoryDashboard() {
         </div>
         <div className="monthly-category-fy-actions">
           <div className="monthly-category-fy-info"><Badge tone="accent">{result.financialYearLabel}</Badge><span>{formatDate(result.financialYearStart)} – {formatDate(result.financialYearEnd)}</span></div>
-          <Button variant="secondary" size="sm" aria-expanded={showAllMonths} aria-controls="monthly-category-all-months" onClick={() => setShowAllMonths((current) => !current)}>{showAllMonths ? 'Hide Months' : 'All Months'}</Button>
+          <Button variant="secondary" size="sm" aria-expanded={showAllMonths} aria-controls="monthly-category-all-months" onClick={handleAllMonthsToggle}>{showAllMonths ? 'Hide Months' : 'All Months'}</Button>
         </div>
       </div>
       <div className="monthly-category-selected-summary" aria-label={`${selectedMonth.label} summary`}>
@@ -197,21 +208,31 @@ export function MonthlyCategoryDashboard() {
       </div>
     </section>
 
-    {showAllMonths && <section id="monthly-category-all-months" className="monthly-category-months" aria-labelledby="financial-year-months-title">
-      <header><div><span className="sales-kpi-section__eyebrow">Financial year months</span><h2 id="financial-year-months-title">{result.financialYearLabel} monthly performance</h2></div><span>Select a month to update the summary and category breakdown</span></header>
-      <div className="monthly-category-month-grid">{result.months.map((month) => {
-        const selected = month.index === selectedMonthIndex;
-        return <button key={month.key} type="button" className={`monthly-category-month-card${selected ? ' monthly-category-month-card--selected' : ''}`} aria-pressed={selected} onClick={() => { setSelectedMonthIndex(month.index); setQuery(''); setShowAllMonths(false); }}>
-          <header><strong>{month.shortLabel}</strong><span>{month.label.slice(-4)}</span></header>
-          <dl>
-            <div><dt>Sales Qty</dt><dd>{formatQuantity(month.totals.salesQty)}</dd></div>
-            <div><dt>Sales</dt><dd>{formatCurrency(month.totals.sales)}</dd></div>
-            <div><dt>Purchase Qty</dt><dd>{formatQuantity(month.totals.purchaseQty)}</dd></div>
-            <div><dt>Purchases</dt><dd>{formatCurrency(month.totals.purchases)}</dd></div>
-            <div className="monthly-category-month-card__gross"><dt>Gross Profit</dt><dd className={month.totals.grossProfit < 0 ? 'monthly-category-negative' : undefined}>{formatCurrency(month.totals.grossProfit)}{month.missingCostRowCount > 0 && <sup title="Gross profit has missing purchase cost">*</sup>}</dd></div>
-          </dl>
-        </button>;
-      })}</div>
+    {(showAllMonths || renderAllMonths) && <section
+      id="monthly-category-all-months"
+      className={`monthly-category-months monthly-category-months--${showAllMonths ? 'visible' : 'hidden'}`}
+      aria-labelledby="financial-year-months-title"
+      aria-hidden={!showAllMonths}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget && !showAllMonths) setRenderAllMonths(false);
+      }}
+    >
+      <div className="monthly-category-months__content">
+        <header><div><span className="sales-kpi-section__eyebrow">Financial year months</span><h2 id="financial-year-months-title">{result.financialYearLabel} monthly performance</h2></div><span>Select a month to update the summary and category breakdown</span></header>
+        <div className="monthly-category-month-grid">{result.months.map((month) => {
+          const selected = month.index === selectedMonthIndex;
+          return <button key={month.key} type="button" className={`monthly-category-month-card${selected ? ' monthly-category-month-card--selected' : ''}`} aria-pressed={selected} tabIndex={showAllMonths ? 0 : -1} onClick={() => { setSelectedMonthIndex(month.index); setQuery(''); setRenderAllMonths(true); setShowAllMonths(false); }}>
+            <header><strong>{month.shortLabel}</strong><span>{month.label.slice(-4)}</span></header>
+            <dl>
+              <div><dt>Sales Qty</dt><dd>{formatQuantity(month.totals.salesQty)}</dd></div>
+              <div><dt>Sales</dt><dd>{formatCurrency(month.totals.sales)}</dd></div>
+              <div><dt>Purchase Qty</dt><dd>{formatQuantity(month.totals.purchaseQty)}</dd></div>
+              <div><dt>Purchases</dt><dd>{formatCurrency(month.totals.purchases)}</dd></div>
+              <div className="monthly-category-month-card__gross"><dt>Gross Profit</dt><dd className={month.totals.grossProfit < 0 ? 'monthly-category-negative' : undefined}>{formatCurrency(month.totals.grossProfit)}{month.missingCostRowCount > 0 && <sup title="Gross profit has missing purchase cost">*</sup>}</dd></div>
+            </dl>
+          </button>;
+        })}</div>
+      </div>
     </section>}
 
     {!showAllMonths && <>
@@ -227,10 +248,10 @@ export function MonthlyCategoryDashboard() {
     <section className="category-sales monthly-category-breakdown" aria-labelledby="monthly-category-breakdown-title">
       <header className="category-sales__header">
         <div><span className="sales-kpi-section__eyebrow">Selected month</span><h2 id="monthly-category-breakdown-title">{selectedMonth.label}</h2><p>Monthly category-wise breakdown</p></div>
-        <div className="category-sales__tools"><TextInput id="monthly-category-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search Category" aria-label="Search Category" /><Badge tone="neutral">{visibleRows.length} of {selectedMonth.rows.length}</Badge></div>
+        <div className="category-sales__tools"><TableDownloadButton tableId="monthly-category-table" fileName={`monthly-category-${selectedMonth.key}.csv`} /><TextInput id="monthly-category-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search Category" aria-label="Search Category" /><Badge tone="neutral">{visibleRows.length} of {selectedMonth.rows.length}</Badge></div>
       </header>
       <div className="category-sales-table-wrap monthly-category-table-wrap">
-        <table className="category-sales-table monthly-category-table">
+        <table id="monthly-category-table" className="category-sales-table monthly-category-table">
           <caption className="sr-only">Category-wise Sales, Purchases and Gross Profit for {selectedMonth.label}</caption>
           <thead><tr>
             <SortHeader label="Category" column="category" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />

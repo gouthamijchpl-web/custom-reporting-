@@ -3,10 +3,13 @@
 A reporting workspace built as a Java / Spring Boot API and a TypeScript single page
 application.
 
-This is the **foundation phase**. It delivers authentication, the application shell, and the
-Teams, Entities and Settings modules in full. Workspace, Data Upload and Reports are deliberately empty
-placeholders â€” the routes, navigation, security and layout around them are finished, so
-each can be built out later without restructuring anything.
+Production deployment and automatic Git integration are documented in
+[DEPLOYMENT.md](DEPLOYMENT.md).
+
+The application includes authentication, workspace administration, data uploads and the
+reporting dashboards. Durable application data is accessed through the Spring Boot API
+and persisted in PostgreSQL/Supabase. Uploaded report sources are stored per entity and
+branch; user interface preferences are stored per account.
 
 ---
 
@@ -37,12 +40,10 @@ cd backend
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-Starts on the `dev` profile with a file-backed H2 database at `backend/data/`, so there is
-nothing to install or migrate and **your accounts survive a restart**. Delete that folder
-to start from a clean slate.
+Starts on the `dev` profile. Set `SUPABASE_DB_URL`, `SUPABASE_DB_USERNAME`, and
+`SUPABASE_DB_PASSWORD` in the terminal before starting the backend.
 
 - API docs: <http://localhost:8080/swagger-ui.html>
-- H2 console: <http://localhost:8080/h2-console> (JDBC URL `jdbc:h2:file:./data/customreporting`, user `sa`, no password)
 
 The `dev` profile also sets `app.security.detailed-authentication-errors: true`, so a
 failed sign-in says whether the **email** was unknown or the **password** was wrong. That
@@ -212,10 +213,18 @@ else resolves to `404` rather than exposing that it exists.
 | PUT    | `/settings/account`     | Update name and email                      |
 | PUT    | `/settings/password`    | Change the password                        |
 
-### Feature modules (placeholders)
+### Data and preference persistence
 
-`GET /workspace`, `GET /uploads`, `GET /reports` return a `NOT_IMPLEMENTED` status
-document. They exist to reserve the URL space; the frontend does not call them.
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/uploads/state?entityId=...&branchId=...` | Load the entity/branch upload snapshot |
+| PUT | `/uploads/state` | Persist normalized Sales, Purchase and Opening Stock data |
+| DELETE | `/uploads/state?entityId=...&branchId=...` | Clear an upload snapshot |
+| GET | `/preferences/{key}` | Load a signed-in user's interface preference |
+| PUT | `/preferences/{key}` | Persist a signed-in user's interface preference |
+
+Older browser IndexedDB uploads are copied to Supabase once, then removed from the local
+browser store after the server confirms the write.
 
 ### Errors
 
@@ -306,12 +315,13 @@ Run with `SPRING_PROFILES_ACTIVE=prod` and supply:
 | Variable                   | Purpose                                        |
 | -------------------------- | ---------------------------------------------- |
 | `APP_JWT_SECRET`           | HMAC signing key, **32+ characters**, required |
-| `DATABASE_URL`             | PostgreSQL JDBC URL                            |
-| `DATABASE_USERNAME`        | Database user                                  |
-| `DATABASE_PASSWORD`        | Database password                              |
+| `SPRING_DATASOURCE_URL`    | Supabase PostgreSQL JDBC URL                   |
+| `SPRING_DATASOURCE_USERNAME` | Supabase Shared Pooler user                  |
+| `SPRING_DATASOURCE_PASSWORD` | Supabase database password                   |
 | `APP_CORS_ALLOWED_ORIGINS` | Frontend origin(s), comma separated            |
 
-The `prod` profile switches the refresh cookie to `Secure` + `SameSite=Strict`, sets
+The `prod` profile switches the refresh cookie to `Secure` + `SameSite=None` for the
+credentialed Vercel-to-Render request, sets
 Hibernate to `validate` (schema changes belong to a migration tool), and turns off the API
 documentation endpoints.
 
@@ -321,18 +331,17 @@ production should add an internal recovery code or administrator approval.
 
 ---
 
-## Notes for the next phase
+## Persistence notes
 
-- Workspace, Data Upload and Reports contain **no** business logic, data loading or
-  widgets. Each is a page component wrapping a shared placeholder scaffold â€” replace the
-  scaffold with real content and routing, navigation and layout stay untouched.
-- The multipart size limits in `application.yml` are already set for the upload module.
-- The active entity from the header switcher is what the Reports module will scope to.
-- Application Preferences was removed at both layers; the theme now simply follows the
-  operating system. The `user_preferences` table may still exist in a development database
-  created earlier â€” it is unused and harmless, and disappears if you delete `backend/data/`.
-- Loading, error, empty, disabled and confirmation states all have shared components
-  (`LoadingState`, `Alert`, `EmptyState`, `Button`, `ConfirmDialog`) ready to use.
+- Users, teams, entities, branches, GST registrations, books and workspace settings are
+  relational records.
+- Uploaded source tables are stored as entity/branch-scoped JSON snapshots so the current
+  report calculations and imported column fidelity remain unchanged.
+- Theme, branch selection and report/upload tab choices are stored in
+  `application_user_preferences`.
+- Search boxes and open/closed modal state remain intentionally transient UI state.
+- Buttons and tab components remain version-controlled React code; the data and durable
+  choices produced by them are stored in Supabase.
 
 ---
 
@@ -359,4 +368,3 @@ The endpoint limits repeated attempts per normalized email. Because knowledge of
 address is the only recovery factor, this workflow is deliberately restricted to a
 controlled internal prototype and should not be exposed to production users without an
 additional in-application verification factor.
-

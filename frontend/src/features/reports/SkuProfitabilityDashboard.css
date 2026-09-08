@@ -19,11 +19,11 @@
 .sku-profitability-table thead th:nth-child(2) .category-sales-table__sort,
 .sku-profitability-table thead th:nth-child(3) .category-sales-table__sort,
 .sku-profitability-table thead th:nth-child(4) .category-sales-table__sort,
-.sku-profitability-table thead th:nth-child(11) .category-sales-table__sort { justify-content: space-between; text-align: left; }
+.sku-profitability-table thead th:nth-child(11) .category-sales-table__sort { justify-content: center; text-align: center; }
 .sku-profitability-table tbody td:nth-child(2),
 .sku-profitability-table tbody td:nth-child(3),
 .sku-profitability-table tbody td:nth-child(4),
-.sku-profitability-table tbody td:nth-child(11) { text-align: left; }
+.sku-profitability-table tbody td:nth-child(11) { text-align: center; }
 .sku-profitability-table tbody td:nth-child(2) { overflow: hidden; text-overflow: ellipsis; }
 .sku-profitability-table__positive { color: var(--success-text); font-weight: var(--weight-semibold); }
 .sku-profitability-table__missing { color: var(--warning-text); font-weight: var(--weight-semibold); }

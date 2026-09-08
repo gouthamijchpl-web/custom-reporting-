@@ -3,8 +3,8 @@ import { createContext } from 'react';
 /**
  * Colour scheme for the interface.
  *
- * Defined here rather than in the shared API types because the theme is now purely a
- * client-side concern — it is remembered in the browser and never sent to the backend.
+ * Defined here rather than in the shared API types because it controls the React UI. The
+ * selected value is persisted through the preferences API for the signed-in account.
  */
 export type ThemePreference = 'LIGHT' | 'DARK' | 'SYSTEM';
 

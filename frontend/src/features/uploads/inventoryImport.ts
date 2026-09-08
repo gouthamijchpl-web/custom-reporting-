@@ -184,7 +184,8 @@ const FIELDS: Record<ImportKind, readonly ImportFieldDefinition[]> = {
 const FINALIZED_STATUSES = new Set(['submitted', 'approved', 'posted', 'completed', 'finalized', 'final', 'processed']);
 const DRAFT_STATUSES = new Set(['draft']);
 const EXCLUDED_STATUSES = new Set(['cancelled', 'canceled', 'void', 'rejected', 'deleted']);
-const MAPPING_STORAGE_KEY = 'custom-reporting.inventory-import-mappings';
+export type ReusableMappings = Record<string, Record<string, string | null>>;
+let reusableMappings: ReusableMappings = {};
 export const CURRENT_NORMALIZATION_VERSION = 2;
 
 export function getImportFields(kind: ImportKind): readonly ImportFieldDefinition[] {
@@ -260,16 +261,12 @@ function signatureFor(kind: ImportKind, headers: string[]): string {
   return `${kind}:${headers.map(normalizeHeader).sort().join('|')}`;
 }
 
-function readSavedMappings(): Record<string, Record<string, string | null>> {
-  try {
-    return JSON.parse(window.localStorage.getItem(MAPPING_STORAGE_KEY) ?? '{}') as Record<string, Record<string, string | null>>;
-  } catch {
-    return {};
-  }
+export function replaceReusableMappings(value: ReusableMappings): void {
+  reusableMappings = value;
 }
 
 function applySavedMapping(signature: string, headers: string[], fallback: ColumnMapping): ColumnMapping {
-  const saved = readSavedMappings()[signature];
+  const saved = reusableMappings[signature];
   if (!saved) return fallback;
   const normalizedHeaders = headers.map(normalizeHeader);
   const applied = Object.fromEntries(Object.entries(fallback).map(([field, defaultIndex]) => {
@@ -304,15 +301,9 @@ function applySavedMapping(signature: string, headers: string[], fallback: Colum
 }
 
 export function saveReusableMapping(file: ImportedInventoryFile, mapping: ColumnMapping): void {
-  const all = readSavedMappings();
-  all[file.templateSignature] = Object.fromEntries(
+  reusableMappings = { ...reusableMappings, [file.templateSignature]: Object.fromEntries(
     Object.entries(mapping).map(([field, index]) => [field, index == null ? null : normalizeHeader(file.headers[index])]),
-  );
-  try {
-    window.localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    // Mapping still applies to the current file when browser persistence is unavailable.
-  }
+  ) };
 }
 
 function headerCandidateScore(kind: ImportKind, row: ImportRow): number {

@@ -20,6 +20,9 @@ dist-ssr/
 .env.*
 !.env.example
 
+# Local browser/test runtime profiles can contain cookies and session storage.
+.runtime/
+
 # ---- IDE and OS ----
 .idea/
 *.iml

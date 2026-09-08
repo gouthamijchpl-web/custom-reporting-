@@ -1,29 +1,55 @@
 package com.customreporting.modules.upload;
 
-import com.customreporting.common.ModulePlaceholderResponse;
+import com.customreporting.modules.upload.dto.UploadStateRequest;
+import com.customreporting.modules.upload.dto.UploadStateResponse;
+import com.customreporting.modules.upload.service.UploadStateService;
+import com.customreporting.security.AppUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Reserved namespace for the Data Upload module.
- *
- * <p>No upload handling exists yet. When it is added, the multipart limits already
- * declared in {@code application.yml} and the authenticated-by-default security rules
- * apply to it without further configuration.</p>
- */
+import java.util.UUID;
+
+/** Cloud persistence for normalized report source files. */
 @RestController
-@RequestMapping("/api/v1/uploads")
-@Tag(name = "Data Upload", description = "Placeholder for the future data upload module")
+@RequestMapping("/api/v1/uploads/state")
+@Tag(name = "Data Upload", description = "Supabase-backed uploaded report data")
 public class DataUploadController {
 
+    private final UploadStateService service;
+
+    public DataUploadController(UploadStateService service) {
+        this.service = service;
+    }
+
     @GetMapping
-    @Operation(summary = "Report the implementation status of the data upload module")
-    public ResponseEntity<ModulePlaceholderResponse> status() {
-        return ResponseEntity.ok(ModulePlaceholderResponse.notImplemented(
-                "data-upload", "The data upload module will be implemented in a later phase."));
+    @Operation(summary = "Load uploaded data for an entity or branch")
+    public ResponseEntity<UploadStateResponse> get(@RequestParam UUID entityId,
+                                                   @RequestParam(required = false) UUID branchId) {
+        return ResponseEntity.ok(service.get(entityId, branchId));
+    }
+
+    @PutMapping
+    @Operation(summary = "Store uploaded data for an entity or branch")
+    public ResponseEntity<UploadStateResponse> put(@AuthenticationPrincipal AppUserPrincipal principal,
+                                                   @Valid @RequestBody UploadStateRequest request) {
+        return ResponseEntity.ok(service.put(principal.getId(), request));
+    }
+
+    @DeleteMapping
+    @Operation(summary = "Remove all uploaded data for an entity or branch")
+    public ResponseEntity<Void> delete(@RequestParam UUID entityId,
+                                       @RequestParam(required = false) UUID branchId) {
+        service.delete(entityId, branchId);
+        return ResponseEntity.noContent().build();
     }
 }

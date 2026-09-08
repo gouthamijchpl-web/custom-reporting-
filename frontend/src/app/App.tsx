@@ -15,9 +15,9 @@ import { AppRoutes } from './AppRoutes';
  */
 export function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <EntityProvider>
             <BranchProvider>
               <BrowserRouter>
@@ -25,8 +25,8 @@ export function App() {
               </BrowserRouter>
             </BranchProvider>
           </EntityProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

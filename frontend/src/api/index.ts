@@ -6,3 +6,5 @@ export { settingsApi } from './settingsApi';
 export { entityApi } from './entityApi';
 export { groupApi } from './groupApi';
 export { teamApi } from './teamApi';
+export { uploadApi } from './uploadApi';
+export { preferenceApi } from './preferenceApi';

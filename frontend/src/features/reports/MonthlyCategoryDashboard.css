@@ -22,11 +22,14 @@
 .monthly-category-selected-card dl > div:last-child dd { color: var(--success-text); }
 .monthly-category-selected-card sup { margin-left: 2px; color: var(--warning-text); font-size: .7em; }
 .monthly-category-negative { color: var(--danger-text) !important; }
-.monthly-category-months { padding: var(--space-1) 0; }
-.monthly-category-months > header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3); }
-.monthly-category-months > header h2 { margin-top: 2px; font-size: var(--text-lg); }
-.monthly-category-months > header > span { color: var(--text-tertiary); font-size: var(--text-xs); }
-.monthly-category-month-grid { display: grid; grid-template-columns: repeat(4, minmax(210px, 235px)); justify-content: center; gap: var(--space-4); }
+.monthly-category-months { display: grid; grid-template-rows: 1fr; min-width: 0; transition: grid-template-rows 220ms cubic-bezier(.22, 1, .36, 1); }
+.monthly-category-months--visible { animation: monthly-category-months-expand 220ms cubic-bezier(.22, 1, .36, 1) both; }
+.monthly-category-months--hidden { grid-template-rows: 0fr; pointer-events: none; animation: monthly-category-months-hide 220ms ease-out both; }
+.monthly-category-months__content { min-height: 0; padding: var(--space-1) 0; overflow: hidden; }
+.monthly-category-months__content > header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3); }
+.monthly-category-months__content > header h2 { margin-top: 2px; font-size: var(--text-lg); }
+.monthly-category-months__content > header > span { color: var(--text-tertiary); font-size: var(--text-xs); }
+.monthly-category-month-grid { --monthly-card-enter-offset: -60px; display: grid; grid-template-columns: repeat(4, minmax(210px, 235px)); justify-content: center; gap: var(--space-4); }
 .monthly-category-month-card { position: relative; isolation: isolate; display: block; width: 100%; height: 165px; padding: 13px 14px 15px; color: var(--text-primary); text-align: left; background: var(--surface-raised); border: 1px solid color-mix(in srgb, var(--accent-border) 68%, var(--border-strong)); border-radius: var(--radius-lg); box-shadow: 0 6px 18px rgba(37, 66, 23, .09), 0 1px 3px rgba(37, 66, 23, .07); transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
 .monthly-category-month-card::before { position: absolute; top: 0; right: 0; left: 0; height: 4px; background: color-mix(in srgb, var(--accent-solid) 48%, var(--accent-border)); border-radius: var(--radius-lg) var(--radius-lg) 0 0; content: ''; }
 .monthly-category-month-card:hover { background: color-mix(in srgb, var(--surface-raised) 94%, var(--accent-surface)); border-color: var(--accent-border); box-shadow: 0 8px 20px rgba(37, 66, 23, .12), 0 2px 4px rgba(37, 66, 23, .08); transform: translateY(-1px); }
@@ -45,6 +48,21 @@
 .monthly-category-month-card__gross dt { font-weight: var(--weight-semibold); }
 .monthly-category-month-card__gross dd { color: var(--success-text); font-size: .8125rem; font-weight: var(--weight-bold); }
 .monthly-category-month-card sup { margin-left: 2px; color: var(--warning-text); font-size: .7em; }
+.monthly-category-months--visible .monthly-category-month-card { animation: monthly-category-month-card-enter 560ms cubic-bezier(.22, 1, .36, 1) both; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(2) { animation-delay: 50ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(3) { animation-delay: 100ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(4) { animation-delay: 150ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(5) { animation-delay: 200ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(6) { animation-delay: 250ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(7) { animation-delay: 300ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(8) { animation-delay: 350ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(9) { animation-delay: 400ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(10) { animation-delay: 450ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(11) { animation-delay: 500ms; }
+.monthly-category-months--visible .monthly-category-month-card:nth-child(12) { animation-delay: 550ms; }
+@keyframes monthly-category-month-card-enter { from { opacity: 0; transform: translateY(var(--monthly-card-enter-offset)); } to { opacity: 1; transform: translateY(0); } }
+@keyframes monthly-category-months-expand { from { grid-template-rows: 0fr; } to { grid-template-rows: 1fr; } }
+@keyframes monthly-category-months-hide { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-15px); } }
 .monthly-category-cost-flag { margin-left: 2px; color: var(--warning-text); font-size: .7em; }
 .monthly-category-table { min-width: 900px; }
 .monthly-category-table thead th { color: color-mix(in srgb, var(--text-primary) 94%, var(--text-accent)); background: color-mix(in srgb, var(--surface-active) 82%, var(--accent-surface)); border-bottom-color: var(--border-strong); }
@@ -56,7 +74,9 @@
 .monthly-category-breakdown .category-sales__header { align-items: center; }
 .monthly-category-breakdown .category-sales__footer span:last-child { display: inline-flex; align-items: center; gap: 5px; }
 @media (max-width: 820px) { .monthly-category-overview { grid-template-columns: 1fr; } .monthly-category-selected-summary { justify-self: start; } }
-@media (max-width: 1180px) { .monthly-category-month-grid { grid-template-columns: repeat(3, minmax(210px, 235px)); } }
-@media (max-width: 740px) { .monthly-category-month-grid { grid-template-columns: repeat(2, minmax(200px, 230px)); gap: var(--space-3); } .monthly-category-months > header { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 1180px) { .monthly-category-month-grid { --monthly-card-enter-offset: -44px; grid-template-columns: repeat(3, minmax(210px, 235px)); } }
+@media (max-width: 740px) { .monthly-category-month-grid { grid-template-columns: repeat(2, minmax(200px, 230px)); gap: var(--space-3); } .monthly-category-months__content > header { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 600px) { .monthly-category-overview { padding: var(--space-3); } .monthly-category-period { align-items: stretch; flex-direction: column; width: 100%; } .monthly-category-period > label, .monthly-category-period > label:nth-child(2) { width: 100%; min-width: 0; } .monthly-category-fy-info > span:last-child { white-space: normal; } .monthly-category-selected-summary { width: min(100%, 300px); } .monthly-category-breakdown .category-sales__header { align-items: stretch; } }
-@media (max-width: 460px) { .monthly-category-month-grid { grid-template-columns: minmax(210px, 235px); } }
+@media (max-width: 460px) { .monthly-category-month-grid { --monthly-card-enter-offset: -26px; grid-template-columns: minmax(210px, 235px); } }
+@media (prefers-reduced-motion: reduce) { .monthly-category-months { transition: none; } .monthly-category-months--visible { animation: none; } .monthly-category-months--visible .monthly-category-month-card { animation: none; } .monthly-category-months--hidden { animation: monthly-category-months-hide-reduced 1ms linear both; } }
+@keyframes monthly-category-months-hide-reduced { to { opacity: 0; } }

@@ -14,6 +14,7 @@ import {
   summarizeSkuProfitabilityRows,
 } from './skuProfitabilityReport';
 import type { SkuProfitabilityRow } from './skuProfitabilityReport';
+import { TableDownloadButton } from './TableDownloadButton';
 import './DailySalesCategoryDashboard.css';
 import './SkuProfitabilityDashboard.css';
 
@@ -129,7 +130,7 @@ export function SkuProfitabilityDashboard() {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be read from this browser.' });
+        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be loaded from Supabase.' });
       });
   }, [currentFinancialYear, scopeId, selectedBranch, selectedEntity]);
 
@@ -217,12 +218,13 @@ export function SkuProfitabilityDashboard() {
           <label htmlFor="sku-profitability-financial-year"><span>Financial Year</span><Select id="sku-profitability-financial-year" value={String(selectedYear)} options={yearOptions} onValueChange={handleYearChange} /></label>
           <label htmlFor="sku-profitability-month"><span>Month</span><Select id="sku-profitability-month" value={selectedMonth} options={monthOptions} onValueChange={handleMonthChange} /></label>
           <label className="sku-profitability__search" htmlFor="sku-profitability-search"><span>Search</span><TextInput id="sku-profitability-search" type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPageIndex(0); }} leadingIcon={<SearchIcon size={16} />} placeholder="Stock / Description / Product / Style" /></label>
+          <TableDownloadButton tableId="sku-profitability-table" fileName={`sku-profitability-${result.financialYearLabel}.csv`} />
           <Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge>
         </div>
       </header>
 
       <div className="category-sales-table-wrap sku-profitability__table-wrap">
-        <table className="category-sales-table sku-profitability-table">
+        <table id="sku-profitability-table" className="category-sales-table sku-profitability-table">
           <caption className="sr-only">SKU-wise profitability using normalized Sales and historical Purchase costs</caption>
           <thead><tr>
             <SortHeader label="Stock Number" column="stockNumber" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />

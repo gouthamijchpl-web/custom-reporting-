@@ -13,14 +13,14 @@
 .style-purchase-analysis__table-wrap { max-height: 560px; }
 .style-purchase-table { min-width: 1420px; }
 .style-purchase-table thead th:first-child { left: 0; width: 125px; min-width: 125px; }
-.style-purchase-table thead th:nth-child(2) { position: sticky; left: 125px; z-index: 5; width: 185px; min-width: 185px; text-align: left; }
-.style-purchase-table thead th:nth-child(2) .category-sales-table__sort { justify-content: space-between; text-align: left; }
+.style-purchase-table thead th:nth-child(2) { position: sticky; left: 125px; z-index: 5; width: 185px; min-width: 185px; text-align: center; }
+.style-purchase-table thead th:nth-child(2) .category-sales-table__sort { justify-content: center; text-align: center; }
 .style-purchase-table thead th:nth-child(n+3):nth-child(-n+8) { width: 145px; min-width: 145px; }
 .style-purchase-table thead th:nth-child(9) { width: 170px; min-width: 170px; text-align: center; }
 .style-purchase-table thead th:nth-child(9) .category-sales-table__sort { justify-content: center; }
 .style-purchase-table thead th:nth-child(10) { width: 115px; min-width: 115px; }
 .style-purchase-table tbody th:first-child { left: 0; width: 125px; min-width: 125px; }
-.style-purchase-table tbody th:nth-child(2) { position: sticky; left: 125px; z-index: 2; width: 185px; min-width: 185px; color: var(--text-primary); text-align: left; background: var(--surface-raised); box-shadow: 1px 0 0 var(--border-subtle); font-weight: var(--weight-semibold); }
+.style-purchase-table tbody th:nth-child(2) { position: sticky; left: 125px; z-index: 2; width: 185px; min-width: 185px; color: var(--text-primary); text-align: center; background: var(--surface-raised); box-shadow: 1px 0 0 var(--border-subtle); font-weight: var(--weight-semibold); }
 .style-purchase-table tbody tr:hover th:nth-child(2) { background: var(--surface-hover); }
 .style-purchase-table tfoot th:first-child { left: 0; width: 125px; min-width: 125px; }
 .style-purchase-table tfoot th:nth-child(2) { position: sticky; left: 125px; z-index: 5; width: 185px; min-width: 185px; background: var(--surface-active); box-shadow: 1px 0 0 var(--border-default), 0 -2px 5px rgba(37, 66, 23, .07); }

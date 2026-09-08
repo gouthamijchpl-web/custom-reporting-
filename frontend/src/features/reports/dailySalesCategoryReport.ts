@@ -4,6 +4,7 @@ import {
   normalizeReportingProduct,
   remapImportFile,
 } from '@/features/uploads/inventoryImport';
+import { uploadApi } from '@/api';
 import type {
   ImportedInventoryFile,
   ImportContext,
@@ -49,16 +50,58 @@ export interface DailySalesCategorySource {
   openingStockFileCount: number;
 }
 
-type UploadsByType = Partial<Record<ImportKind, ImportedInventoryFile[]>>;
+type UploadsByType = Partial<Record<ImportKind, Array<ImportedInventoryFile | LegacyImportedFile>>>;
 
-interface StoredEntityUploads {
+interface LegacyStoredEntityUploads {
   uploadsByType?: UploadsByType;
 }
 
-const UPLOAD_DATABASE_NAME = 'custom-reporting-uploads';
-const UPLOAD_STORE_NAME = 'entity-uploads';
+const LEGACY_UPLOAD_DATABASE_NAME = 'custom-reporting-uploads';
+const LEGACY_UPLOAD_STORE_NAME = 'entity-uploads';
+
 const sourceCache = new Map<string, DailySalesCategorySource>();
 const sourceRequests = new Map<string, Promise<DailySalesCategorySource>>();
+
+function hasUploadedFiles(value: UploadsByType | undefined): boolean {
+  return Object.values(value ?? {}).some((files) => (files?.length ?? 0) > 0);
+}
+
+function readLegacyUploads(scopeId: string): Promise<UploadsByType | null> {
+  if (!window.indexedDB) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const openRequest = window.indexedDB.open(LEGACY_UPLOAD_DATABASE_NAME, 1);
+    openRequest.onerror = () => resolve(null);
+    openRequest.onupgradeneeded = () => {
+      if (!openRequest.result.objectStoreNames.contains(LEGACY_UPLOAD_STORE_NAME)) {
+        openRequest.result.createObjectStore(LEGACY_UPLOAD_STORE_NAME, { keyPath: 'entityId' });
+      }
+    };
+    openRequest.onsuccess = () => {
+      const database = openRequest.result;
+      const transaction = database.transaction(LEGACY_UPLOAD_STORE_NAME, 'readonly');
+      const request = transaction.objectStore(LEGACY_UPLOAD_STORE_NAME).get(scopeId);
+      request.onsuccess = () => resolve((request.result as LegacyStoredEntityUploads | undefined)?.uploadsByType ?? null);
+      request.onerror = () => resolve(null);
+      transaction.oncomplete = () => database.close();
+      transaction.onerror = () => database.close();
+    };
+  });
+}
+
+function deleteLegacyUploads(scopeId: string): Promise<void> {
+  if (!window.indexedDB) return Promise.resolve();
+  return new Promise((resolve) => {
+    const openRequest = window.indexedDB.open(LEGACY_UPLOAD_DATABASE_NAME, 1);
+    openRequest.onerror = () => resolve();
+    openRequest.onsuccess = () => {
+      const database = openRequest.result;
+      const transaction = database.transaction(LEGACY_UPLOAD_STORE_NAME, 'readwrite');
+      transaction.objectStore(LEGACY_UPLOAD_STORE_NAME).delete(scopeId);
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); resolve(); };
+    };
+  });
+}
 
 export function invalidateDailySalesCategorySource(scopeId?: string): void {
   if (scopeId) {
@@ -68,19 +111,6 @@ export function invalidateDailySalesCategorySource(scopeId?: string): void {
   }
   sourceCache.clear();
   sourceRequests.clear();
-}
-
-function openUploadDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open(UPLOAD_DATABASE_NAME, 1);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(UPLOAD_STORE_NAME)) {
-        request.result.createObjectStore(UPLOAD_STORE_NAME, { keyPath: 'entityId' });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('Unable to open uploaded data storage.'));
-  });
 }
 
 function isCurrentUpload(value: unknown): value is ImportedInventoryFile {
@@ -139,38 +169,36 @@ export function loadDailySalesCategorySource(
   if (cached) return Promise.resolve(cached);
   const pending = sourceRequests.get(scopeId);
   if (pending) return pending;
-  const requestPromise = openUploadDatabase().then((database) => new Promise<DailySalesCategorySource>((resolve, reject) => {
-    const transaction = database.transaction(UPLOAD_STORE_NAME, 'readonly');
-    const request = transaction.objectStore(UPLOAD_STORE_NAME).get(scopeId);
-    request.onsuccess = () => {
-      const stored = request.result as StoredEntityUploads | undefined;
-      const salesFiles = normalizeStoredFiles('sales', stored?.uploadsByType?.sales ?? [], context);
-      const purchaseFiles = normalizeStoredFiles('purchases', stored?.uploadsByType?.purchases ?? [], context);
-      const openingStockFiles = normalizeStoredFiles('opening-stock', stored?.uploadsByType?.['opening-stock'] ?? [], context);
-      const sales = acceptedUniqueRecords(salesFiles, 'sales');
-      const purchases = acceptedUniqueRecords(purchaseFiles, 'purchases');
-      const openingStock = acceptedUniqueRecords(openingStockFiles, 'opening-stock');
-      const latestSalesDate = sales.reduce<string | null>((latest, row) => (
-        row.invoiceDate && (!latest || row.invoiceDate > latest) ? row.invoiceDate : latest
-      ), null);
-      const source = {
-        sales,
-        purchases,
-        openingStock,
-        latestSalesDate,
-        sourceFileCount: salesFiles.length + purchaseFiles.length,
-        openingStockFileCount: openingStockFiles.length,
-      };
-      sourceCache.set(scopeId, source);
-      resolve(source);
+  const requestPromise = uploadApi.load<UploadsByType>(context.entity.id, context.branch?.id ?? null).then(async (stored) => {
+    let uploadsByType = stored.uploadsByType;
+    if (!hasUploadedFiles(uploadsByType)) {
+      const legacy = await readLegacyUploads(scopeId);
+      if (hasUploadedFiles(legacy ?? undefined)) {
+        uploadsByType = legacy ?? {};
+        await uploadApi.save(context.entity.id, context.branch?.id ?? null, uploadsByType);
+        await deleteLegacyUploads(scopeId);
+      }
+    }
+    const salesFiles = normalizeStoredFiles('sales', uploadsByType?.sales ?? [], context);
+    const purchaseFiles = normalizeStoredFiles('purchases', uploadsByType?.purchases ?? [], context);
+    const openingStockFiles = normalizeStoredFiles('opening-stock', uploadsByType?.['opening-stock'] ?? [], context);
+    const sales = acceptedUniqueRecords(salesFiles, 'sales');
+    const purchases = acceptedUniqueRecords(purchaseFiles, 'purchases');
+    const openingStock = acceptedUniqueRecords(openingStockFiles, 'opening-stock');
+    const latestSalesDate = sales.reduce<string | null>((latest, row) => (
+      row.invoiceDate && (!latest || row.invoiceDate > latest) ? row.invoiceDate : latest
+    ), null);
+    const source = {
+      sales,
+      purchases,
+      openingStock,
+      latestSalesDate,
+      sourceFileCount: salesFiles.length + purchaseFiles.length,
+      openingStockFileCount: openingStockFiles.length,
     };
-    request.onerror = () => reject(request.error ?? new Error('Unable to read normalized Sales and Purchase data.'));
-    transaction.oncomplete = () => database.close();
-    transaction.onerror = () => {
-      database.close();
-      reject(transaction.error ?? new Error('Unable to read normalized Sales and Purchase data.'));
-    };
-  })).finally(() => sourceRequests.delete(scopeId));
+    sourceCache.set(scopeId, source);
+    return source;
+  }).finally(() => sourceRequests.delete(scopeId));
   sourceRequests.set(scopeId, requestPromise);
   return requestPromise;
 }

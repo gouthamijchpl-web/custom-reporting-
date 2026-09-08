@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
+import { useCloudPreference } from '@/hooks/useCloudPreference';
 import { ThemeContext, type ThemeContextValue, type ThemePreference } from './themeContext';
 
-const STORAGE_KEY = 'custom-reporting.theme';
 const DEFAULT_THEME: ThemePreference = 'SYSTEM';
 
 /**
  * Applies the selected colour scheme to the document.
  *
- * The choice is remembered in localStorage, which is also what paints the correct theme on
- * the very first frame after a reload. It follows the operating system unless changed.
+ * The choice is stored per account in Supabase and follows the operating system unless
+ * changed.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePreference>(() => readCachedTheme());
+  const [storedTheme, setThemeState] = useCloudPreference<ThemePreference>('appearance.theme', DEFAULT_THEME);
+  const theme = storedTheme === 'LIGHT' || storedTheme === 'DARK' || storedTheme === 'SYSTEM'
+    ? storedTheme
+    : DEFAULT_THEME;
 
   useEffect(() => {
     document.documentElement.dataset['theme'] = theme.toLowerCase();
@@ -20,26 +23,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((next: ThemePreference) => {
     setThemeState(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // Storage can be unavailable (private mode, blocked cookies); the theme still applies.
-    }
-  }, []);
+  }, [setThemeState]);
 
   const value = useMemo<ThemeContextValue>(() => ({ theme, setTheme }), [theme, setTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-}
-
-function readCachedTheme(): ThemePreference {
-  try {
-    const cached = window.localStorage.getItem(STORAGE_KEY);
-    if (cached === 'LIGHT' || cached === 'DARK' || cached === 'SYSTEM') {
-      return cached;
-    }
-  } catch {
-    // Ignore and fall through to the default.
-  }
-  return DEFAULT_THEME;
 }

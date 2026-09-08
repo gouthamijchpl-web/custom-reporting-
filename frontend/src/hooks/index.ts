@@ -7,3 +7,4 @@ export { useMediaQuery, Breakpoint } from './useMediaQuery';
 export { useTheme } from './useTheme';
 export { useToast } from './useToast';
 export { useToggle } from './useToggle';
+export { useCloudPreference } from './useCloudPreference';

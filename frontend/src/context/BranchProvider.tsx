@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ApiError, entityApi } from '@/api';
+import { useCloudPreference } from '@/hooks/useCloudPreference';
 import { useEntities } from '@/hooks/useEntities';
 import { BranchContext, type BranchContextValue, type BranchStatus } from './branchContext';
 import type { EntityBranch } from '@/types';
-
-const BRANCH_SELECTION_KEY = 'custom-reporting.selected-branches';
 
 interface LoadedBranches {
   entityId: string;
@@ -17,34 +16,14 @@ interface BranchFailure {
   message: string;
 }
 
-function readRememberedSelections(): Record<string, string> {
-  try {
-    const stored = window.localStorage.getItem(BRANCH_SELECTION_KEY);
-    if (!stored) return {};
-    const parsed = JSON.parse(stored) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    return Object.fromEntries(
-      Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
-    );
-  } catch {
-    return {};
-  }
-}
-
 export function BranchProvider({ children }: { children: ReactNode }) {
   const { selectedEntity } = useEntities();
   const entityId = selectedEntity?.id ?? null;
   const [loaded, setLoaded] = useState<LoadedBranches | null>(null);
   const [failure, setFailure] = useState<BranchFailure | null>(null);
-  const [selectedByEntity, setSelectedByEntity] = useState<Record<string, string>>(readRememberedSelections);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(BRANCH_SELECTION_KEY, JSON.stringify(selectedByEntity));
-    } catch {
-      // Selection persistence is a convenience; branch loading and selection still work without it.
-    }
-  }, [selectedByEntity]);
+  const [selectedByEntity, setSelectedByEntity] = useCloudPreference<Record<string, string>>(
+    'navigation.selected-branches', {},
+  );
 
   const applyBranches = useCallback((ownerEntityId: string, branches: EntityBranch[]) => {
     setLoaded({ entityId: ownerEntityId, branches });
@@ -57,7 +36,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       if (!nextId || current[ownerEntityId] === nextId) return current;
       return { ...current, [ownerEntityId]: nextId };
     });
-  }, []);
+  }, [setSelectedByEntity]);
 
   const reload = useCallback((): Promise<void> => {
     if (!entityId) return Promise.resolve();
@@ -79,7 +58,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const select = useCallback((branchId: string) => {
     if (!entityId) return;
     setSelectedByEntity((current) => ({ ...current, [entityId]: branchId }));
-  }, [entityId]);
+  }, [entityId, setSelectedByEntity]);
 
   const value = useMemo<BranchContextValue>(() => {
     const isCurrent = loaded?.entityId === entityId;

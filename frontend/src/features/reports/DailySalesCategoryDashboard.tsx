@@ -11,6 +11,7 @@ import {
   loadDailySalesCategorySource,
 } from './dailySalesCategoryReport';
 import { ReportDatePicker } from './ReportDatePicker';
+import { TableDownloadButton } from './TableDownloadButton';
 import type {
   DailySalesCategoryRow,
   DailySalesCategorySource,
@@ -77,6 +78,12 @@ function KpiCard({ label, value, icon, negative = false, detail }: KpiCardProps)
   </article>;
 }
 
+function kpiDatasetKey(kpis: KpiCardProps[]): string {
+  return kpis.map(({ label, value, detail, negative }) => (
+    `${label}\u0001${value}\u0001${detail ?? ''}\u0001${negative ? 'negative' : 'positive'}`
+  )).join('\u0000');
+}
+
 interface SortHeaderProps {
   label: string;
   column: SortKey;
@@ -132,7 +139,7 @@ export function DailySalesCategoryDashboard() {
         setLoadState({
           scopeId,
           source: null,
-          error: 'The normalized Sales and Purchase data could not be read from this browser.',
+          error: 'The normalized Sales and Purchase data could not be loaded from Supabase.',
         });
       });
   }, [scopeId, selectedBranch, selectedEntity]);
@@ -219,24 +226,25 @@ export function DailySalesCategoryDashboard() {
 
     <section className="sales-kpi-section" aria-labelledby="daily-kpi-title">
       <header><div><span className="sales-kpi-section__eyebrow">Selected date</span><h2 id="daily-kpi-title">Daily performance</h2></div><span>{formatDate(reportDate)}</span></header>
-      <div className="sales-kpi-grid sales-kpi-grid--daily">{dailyKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
+      <div key={kpiDatasetKey(dailyKpis)} className="sales-kpi-grid sales-kpi-grid--daily">{dailyKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
     </section>
 
     <section className="sales-kpi-section" aria-labelledby="ytd-kpi-title">
       <header><div><span className="sales-kpi-section__eyebrow">Financial year to date</span><h2 id="ytd-kpi-title">{result.financialYearLabel} performance</h2></div><span>{formatDate(result.financialYearStart)} – {formatDate(result.reportDate)}</span></header>
-      <div className="sales-kpi-grid sales-kpi-grid--ytd">{ytdKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
+      <div key={kpiDatasetKey(ytdKpis)} className="sales-kpi-grid sales-kpi-grid--ytd">{ytdKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
     </section>
 
     <section className="category-sales" aria-labelledby="category-sales-title">
       <header className="category-sales__header">
         <div><span className="sales-kpi-section__eyebrow">Product / Category</span><h2 id="category-sales-title">Category-wise breakdown</h2><p>All styles are consolidated under their mapped product category.</p></div>
         <div className="category-sales__tools">
+          <TableDownloadButton tableId="daily-sales-category-table" fileName={`daily-sales-category-${reportDate}.csv`} />
           <TextInput id="category-sales-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search category" aria-label="Search category" />
           <Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge>
         </div>
       </header>
       <div className="category-sales-table-wrap">
-        <table className="category-sales-table">
+        <table id="daily-sales-category-table" className="category-sales-table">
           <caption className="sr-only">Daily and financial-year sales performance grouped by product category</caption>
           <thead>
           <tr className="category-sales-table__group-row">

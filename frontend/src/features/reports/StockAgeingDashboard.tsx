@@ -6,6 +6,7 @@ import { loadDailySalesCategorySource } from './dailySalesCategoryReport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
 import { ReportDatePicker } from './ReportDatePicker';
 import { stockAgeingReportFor, summarizeStockAgeingRows } from './stockAgeingReport';
+import { TableDownloadButton } from './TableDownloadButton';
 import type {
   StockAgeingBucketKey,
   StockAgeingRow,
@@ -25,12 +26,6 @@ interface ReportLoadState {
 
 const QUANTITY_FORMATTER = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 const PAGE_SIZE = 200;
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-IN', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
 const BUCKET_OPTIONS: ReadonlyArray<{ value: BucketFilter; label: string }> = [
   { value: 'all', label: 'All Ageing Buckets' },
   { value: 'lessThan30', label: 'Less than 30 Days' },
@@ -45,10 +40,6 @@ function todayIso(): string {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.valueOf() - offset).toISOString().slice(0, 10);
-}
-
-function formatDate(value: string): string {
-  return DATE_FORMATTER.format(new Date(`${value}T00:00:00Z`));
 }
 
 function formatQuantity(value: number): string {
@@ -116,7 +107,7 @@ export function StockAgeingDashboard() {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be read from this browser.' });
+        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be loaded from Supabase.' });
       });
   }, [scopeId, selectedBranch, selectedEntity]);
 
@@ -192,14 +183,9 @@ export function StockAgeingDashboard() {
     { label: '120–180 Days', value: visibleTotals.days120To180, className: 'stock-ageing-summary__card--warning' },
     { label: '>180 Days', value: visibleTotals.moreThan180, className: 'stock-ageing-summary__card--aged' },
   ];
+  const summaryAnimationKey = summaryCards.map(({ label, value }) => `${label}\u0001${value}`).join('\u0000');
 
   return <div className="stock-ageing-dashboard" aria-busy={asOnDate !== deferredAsOnDate}>
-    {result.negativeStockSkuCount > 0 && <Alert variant="warning" title="Data status: Negative Stock / Missing Purchase History">
-      {result.negativeStockSkuCount} {result.negativeStockSkuCount === 1 ? 'SKU has' : 'SKUs have'} sales or reductions exceeding traceable inward stock ({formatQuantity(result.negativeStockQuantity)} qty). This quantity is not placed into an ageing bucket.
-    </Alert>}
-    {result.unagedReturnSkuCount > 0 && <Alert variant="warning" title="Data status: Stock age unavailable">
-      {formatQuantity(result.unagedReturnQuantity)} returned qty across {result.unagedReturnSkuCount} {result.unagedReturnSkuCount === 1 ? 'SKU has' : 'SKUs have'} no traceable purchase-origin date and is excluded from ageing buckets.
-    </Alert>}
     {result.unknownOpeningStockSkuCount > 0 && <Alert variant="warning" title="Data status: Opening Stock Age Unknown">
       {formatQuantity(result.unknownOpeningStockQuantity)} remaining opening qty across {result.unknownOpeningStockSkuCount} {result.unknownOpeningStockSkuCount === 1 ? 'SKU has' : 'SKUs have'} no historical stock-origin date. It participates in FIFO depletion but is not assigned to an ageing bucket.
     </Alert>}
@@ -210,12 +196,7 @@ export function StockAgeingDashboard() {
     {Math.abs(result.reconciliationDifference) > 0.0001 && <Alert variant="danger" title="Reconciliation warning">Ageing buckets do not reconcile with identifiable remaining purchase lots.</Alert>}
 
     <section className="stock-ageing-summary" aria-label="Stock ageing summary">
-      <div className="stock-ageing-summary__heading">
-        <span className="sales-kpi-section__eyebrow">Stock position</span>
-        <h2>Ageing summary</h2>
-        <p>Unsold quantity as of {formatDate(result.asOnDate)}</p>
-      </div>
-      <div className="stock-ageing-summary__cards">
+      <div key={summaryAnimationKey} className="stock-ageing-summary__cards">
         {summaryCards.map((card) => <article key={card.label} className={`stock-ageing-summary__card ${card.className ?? ''}`.trim()}>
           <span>{card.label}</span><strong>{formatQuantity(card.value)}</strong>
         </article>)}
@@ -235,12 +216,13 @@ export function StockAgeingDashboard() {
           <label htmlFor="stock-ageing-product"><span>Product Type</span><Select id="stock-ageing-product" value={productFilter} options={productOptions} onValueChange={(value) => { setProductFilter(value); resetPage(); }} /></label>
           <label htmlFor="stock-ageing-style"><span>Style</span><Select id="stock-ageing-style" value={styleFilter} options={styleOptions} onValueChange={(value) => { setStyleFilter(value); resetPage(); }} /></label>
           <label htmlFor="stock-ageing-bucket"><span>Ageing Bucket</span><Select id="stock-ageing-bucket" value={bucketFilter} options={BUCKET_OPTIONS} onValueChange={(value) => { setBucketFilter(value); resetPage(); }} /></label>
+          <TableDownloadButton tableId="stock-ageing-table" fileName={`stock-ageing-${deferredAsOnDate}.csv`} />
           <Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge>
         </div>
       </header>
 
       <div className="category-sales-table-wrap stock-ageing__table-wrap">
-        <table className="category-sales-table stock-ageing-table">
+        <table id="stock-ageing-table" className="category-sales-table stock-ageing-table">
           <caption className="sr-only">Stock ageing of current unsold inventory using FIFO allocation</caption>
           <thead><tr>
             <SortHeader label="SKU Number" column="skuNumber" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />

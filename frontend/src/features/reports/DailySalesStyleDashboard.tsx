@@ -7,6 +7,7 @@ import type { DailySalesCategorySource } from './dailySalesCategoryReport';
 import { calculateDailySalesStyleReport } from './dailySalesStyleReport';
 import type { DailySalesStyleRow } from './dailySalesStyleReport';
 import { ReportDatePicker } from './ReportDatePicker';
+import { TableDownloadButton } from './TableDownloadButton';
 import './DailySalesCategoryDashboard.css';
 import './DailySalesStyleDashboard.css';
 
@@ -49,6 +50,12 @@ function KpiCard({ label, value, icon, negative = false, detail }: KpiCardProps)
   </article>;
 }
 
+function kpiDatasetKey(kpis: KpiCardProps[]): string {
+  return kpis.map(({ label, value, detail, negative }) => (
+    `${label}\u0001${value}\u0001${detail ?? ''}\u0001${negative ? 'negative' : 'positive'}`
+  )).join('\u0000');
+}
+
 function SortHeader({ label, column, activeColumn, direction, onSort }: {
   label: string;
   column: SortKey;
@@ -86,7 +93,7 @@ export function DailySalesStyleDashboard() {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be read from this browser.' });
+        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be loaded from Supabase.' });
       });
   }, [scopeId, selectedBranch, selectedEntity]);
 
@@ -162,20 +169,20 @@ export function DailySalesStyleDashboard() {
 
     <section className="sales-kpi-section" aria-labelledby="style-daily-kpi-title">
       <header><div><span className="sales-kpi-section__eyebrow">Selected date</span><h2 id="style-daily-kpi-title">Daily performance</h2></div><span>{formatDate(reportDate)}</span></header>
-      <div className="sales-kpi-grid sales-kpi-grid--daily">{dailyKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
+      <div key={kpiDatasetKey(dailyKpis)} className="sales-kpi-grid sales-kpi-grid--daily">{dailyKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
     </section>
     <section className="sales-kpi-section" aria-labelledby="style-ytd-kpi-title">
       <header><div><span className="sales-kpi-section__eyebrow">Financial year to date</span><h2 id="style-ytd-kpi-title">{result.financialYearLabel} performance</h2></div><span>{formatDate(result.financialYearStart)} – {formatDate(result.reportDate)}</span></header>
-      <div className="sales-kpi-grid sales-kpi-grid--ytd">{ytdKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
+      <div key={kpiDatasetKey(ytdKpis)} className="sales-kpi-grid sales-kpi-grid--ytd">{ytdKpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}</div>
     </section>
 
     <section className="category-sales style-sales" aria-labelledby="style-sales-title">
       <header className="category-sales__header">
         <div><span className="sales-kpi-section__eyebrow">Style + Product</span><h2 id="style-sales-title">Style-wise breakdown</h2><p>Each mapped Style and Product combination is reported separately.</p></div>
-        <div className="category-sales__tools"><TextInput id="style-sales-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search style / product" aria-label="Search style or product" /><Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge></div>
+        <div className="category-sales__tools"><TableDownloadButton tableId="daily-sales-style-table" fileName={`daily-sales-style-${reportDate}.csv`} /><TextInput id="style-sales-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search style / product" aria-label="Search style or product" /><Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge></div>
       </header>
       <div className="category-sales-table-wrap">
-        <table className="category-sales-table style-sales-table">
+        <table id="daily-sales-style-table" className="category-sales-table style-sales-table">
           <caption className="sr-only">Daily and financial-year sales performance grouped by Style and Product</caption>
           <thead>
           <tr className="style-sales-table__group-row">

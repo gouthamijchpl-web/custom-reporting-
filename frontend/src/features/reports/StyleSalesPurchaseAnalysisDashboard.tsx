@@ -5,6 +5,7 @@ import { useBranches, useEntities } from '@/hooks';
 import { financialYearFor, loadDailySalesCategorySource } from './dailySalesCategoryReport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
 import { ReportDatePicker } from './ReportDatePicker';
+import { TableDownloadButton } from './TableDownloadButton';
 import {
   calculateStyleSalesPurchaseAnalysis,
   summarizeStyleSalesPurchaseRows,
@@ -127,7 +128,7 @@ export function StyleSalesPurchaseAnalysisDashboard() {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be read from this browser.' });
+        setLoadState({ scopeId, source: null, error: 'The normalized Sales and Purchase data could not be loaded from Supabase.' });
       });
   }, [scopeId, selectedBranch, selectedEntity]);
 
@@ -205,12 +206,13 @@ export function StyleSalesPurchaseAnalysisDashboard() {
             <span>Status</span>
             <Select id="style-purchase-status-filter" value={statusFilter} options={STATUS_OPTIONS} onValueChange={setStatusFilter} />
           </label>
+          <TableDownloadButton tableId="style-sales-purchase-table" fileName={`style-sales-purchase-${fromDate}-to-${toDate}.csv`} />
           <Badge tone="neutral">{visibleRows.length} of {result.rows.length}</Badge>
         </div>
       </header>
 
       <div className="category-sales-table-wrap style-purchase-analysis__table-wrap">
-        <table className="category-sales-table style-purchase-table">
+        <table id="style-sales-purchase-table" className="category-sales-table style-purchase-table">
           <caption className="sr-only">Style-wise sales against purchase analysis for the selected period</caption>
           <thead><tr>
             <SortHeader label="Style" column="style" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
