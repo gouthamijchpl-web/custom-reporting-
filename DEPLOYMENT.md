@@ -46,8 +46,8 @@ their values:
 | `APP_CORS_ALLOWED_ORIGINS` | `https://custom-reporting-frontend.vercel.app` |
 
 Render supplies `PORT`; do not hardcode it. The production profile uses Hibernate
-`validate`. Flyway runs first and baselines the existing database at version 1 before
-applying `V2__persist_uploads_and_user_preferences.sql`. The migration creates
+`validate`. Flyway runs first and baselines the database at version 1. Migration 1.1
+creates any missing original application tables, then migration 2 creates
 `uploaded_data_states` and `application_user_preferences`; no manual SQL editor step is required.
 
 ## Vercel: `custom-reporting-frontend`
