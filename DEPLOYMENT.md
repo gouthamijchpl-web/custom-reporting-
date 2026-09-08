@@ -12,6 +12,10 @@ git push origin main
 Render and Vercel native Git integrations are the deployment triggers. No GitHub Actions
 workflow or manual deploy is required for an ordinary production update.
 
+Uncommitted local changes never deploy. Automatic production deployment begins only after
+a commit is pushed or merged into GitHub `main`. Vercel preview deployments for other
+branches are disabled by `frontend/vercel.json`.
+
 ## Render: `custom-reporting-backend`
 
 In **Settings -> Build & Deploy**, verify:
@@ -78,6 +82,11 @@ VITE_API_BASE_URL=https://custom-reporting-backend.onrender.com/api/v1
 Do not add database usernames, passwords, JDBC URLs, JWT secrets, or other backend
 credentials to Vercel. Variables beginning with `VITE_` are embedded in the public
 browser bundle.
+
+Only the `custom-reporting-frontend` Vercel project should remain connected to this
+repository, with Root Directory set to `frontend`. The repository-root `vercel.json`
+disables automatic deployments for the duplicate `custom-reporting` project, while
+`frontend/vercel.json` enables the real frontend only for `main`.
 
 ## Local development
 
