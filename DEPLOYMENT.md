@@ -44,11 +44,15 @@ their values:
 | `APP_JWT_SECRET` | Random production-only value, at least 32 characters |
 | `APP_CREDENTIAL_ENCRYPTION_KEY` | Random production-only credential-encryption key |
 | `APP_CORS_ALLOWED_ORIGINS` | `https://custom-reporting-frontend.vercel.app` |
+| `DB_POOL_MAX_SIZE` | Optional Hikari pool size; defaults to `3` for Supabase session-pool limits |
+| `DB_POOL_MIN_IDLE` | Optional idle connection floor; defaults to `0` |
 
 Render supplies `PORT`; do not hardcode it. The production profile uses Hibernate
 `validate`. Flyway runs first and baselines the database at version 1. Migration 1.1
 creates any missing original application tables, then migration 2 creates
 `uploaded_data_states` and `application_user_preferences`; no manual SQL editor step is required.
+The small production connection pool also allows Render's old and new instances to overlap
+during a rolling deploy without exhausting Supabase's shared session-pool client limit.
 
 ## Vercel: `custom-reporting-frontend`
 

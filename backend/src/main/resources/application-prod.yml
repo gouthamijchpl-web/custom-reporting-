@@ -4,6 +4,14 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Render overlaps the old and new instances during a deploy. Keep both pools below
+      # Supabase's shared session-pool limit (15 clients) so Flyway can also connect.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:3}
+      minimum-idle: ${DB_POOL_MIN_IDLE:0}
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
