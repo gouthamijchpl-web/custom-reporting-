@@ -122,6 +122,27 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                      Tests must never inherit a developer or deployment PostgreSQL URL.
+                      JVM system properties have higher precedence than external Spring
+                      config files, keeping every Maven test run on disposable H2.
+                    -->
+                    <systemPropertyVariables>
+                        <spring.profiles.active>test</spring.profiles.active>
+                        <spring.datasource.url>jdbc:h2:mem:customreporting-test;DB_CLOSE_DELAY=-1</spring.datasource.url>
+                        <spring.datasource.username>sa</spring.datasource.username>
+                        <spring.datasource.password></spring.datasource.password>
+                        <spring.datasource.driver-class-name>org.h2.Driver</spring.datasource.driver-class-name>
+                        <spring.jpa.database-platform>org.hibernate.dialect.H2Dialect</spring.jpa.database-platform>
+                        <spring.jpa.hibernate.ddl-auto>create-drop</spring.jpa.hibernate.ddl-auto>
+                        <spring.flyway.enabled>false</spring.flyway.enabled>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

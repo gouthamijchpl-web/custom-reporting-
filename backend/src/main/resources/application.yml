@@ -34,6 +34,7 @@ server:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:}
   security:
     credential-encryption-key: ${APP_CREDENTIAL_ENCRYPTION_KEY:local-credential-key-change-before-production}
     jwt:

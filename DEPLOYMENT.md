@@ -44,6 +44,7 @@ their values:
 | `APP_JWT_SECRET` | Random production-only value, at least 32 characters |
 | `APP_CREDENTIAL_ENCRYPTION_KEY` | Random production-only credential-encryption key |
 | `APP_CORS_ALLOWED_ORIGINS` | `https://custom-reporting-frontend.vercel.app` |
+| `APP_CORS_ALLOWED_ORIGIN_PATTERNS` | Optional preview pattern; defaults to `https://custom-reporting-frontend-*.vercel.app` |
 | `DB_POOL_MAX_SIZE` | Optional Hikari pool size; defaults to `3` for Supabase session-pool limits |
 | `DB_POOL_MIN_IDLE` | Optional idle connection floor; defaults to `0` |
 
@@ -95,6 +96,11 @@ pool so it cannot starve the Render deployment of Supabase session-pool connecti
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
+
+If local secrets are stored in the ignored `backend/config/application.yml`, that YAML
+document must include `spring.config.activate.on-profile: dev`. Maven test execution also
+forces the datasource to an in-memory H2 database so an external PostgreSQL/Supabase
+configuration can never be modified by integration-test schema setup or cleanup.
 
 In a second terminal:
 

@@ -25,6 +25,7 @@ public class WebConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+        configuration.setAllowedOriginPatterns(corsProperties.allowedOriginPatterns());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Content-Disposition"));
