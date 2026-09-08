@@ -88,7 +88,8 @@ Backend:  http://localhost:8080 -> Supabase PostgreSQL
 ```
 
 In the backend terminal, set `SUPABASE_DB_URL`, `SUPABASE_DB_USERNAME`, and
-`SUPABASE_DB_PASSWORD`, then run:
+`SUPABASE_DB_PASSWORD`, then run. Local development also defaults to a three-connection
+pool so it cannot starve the Render deployment of Supabase session-pool connections:
 
 ```powershell
 cd backend

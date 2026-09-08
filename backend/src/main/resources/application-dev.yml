@@ -4,6 +4,13 @@ spring:
     username: ${SUPABASE_DB_USERNAME}
     password: ${SUPABASE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Local development shares the same constrained Supabase session pool as Render.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:3}
+      minimum-idle: ${DB_POOL_MIN_IDLE:0}
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
   jpa:
     hibernate:
