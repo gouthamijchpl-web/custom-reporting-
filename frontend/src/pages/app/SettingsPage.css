@@ -6,6 +6,8 @@
 }
 
 .settings-page__tabs {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
@@ -16,12 +18,13 @@
   background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
   border: 1px solid var(--border-default);
   border-radius: 14px;
-  box-shadow: 0 3px 12px rgba(41, 60, 20, .055);
+  box-shadow: 0 3px 12px rgba(17, 24, 39, .055);
   backdrop-filter: blur(12px) saturate(110%);
 }
 
 .settings-page__tab {
   position: relative;
+  z-index: 1;
   min-width: 0;
   height: 100%;
   padding: 0 var(--space-3) 3px;
@@ -33,22 +36,8 @@
   border: 0;
   border-radius: 10px;
   transition:
-    background-color 200ms ease,
-    color 200ms ease;
-}
-
-.settings-page__tab::after {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  width: 64%;
-  height: 3px;
-  content: '';
-  background: var(--accent-solid);
-  border-radius: var(--radius-full);
-  opacity: 0;
-  transform: translateX(-50%) scaleX(.55);
-  transition: opacity 200ms ease, transform 200ms ease;
+    background-color 300ms ease-in-out,
+    color 300ms ease-in-out;
 }
 
 .settings-page__tab:hover:not(.settings-page__tab--active) {
@@ -58,14 +47,9 @@
 
 .settings-page__tab--active {
   color: var(--text-accent);
-  background-color: var(--surface-raised);
+  background-color: transparent;
   font-weight: var(--weight-semibold);
-  box-shadow: 0 1px 4px rgba(41, 60, 20, .06);
-}
-
-.settings-page__tab--active::after {
-  opacity: 1;
-  transform: translateX(-50%) scaleX(1);
+  box-shadow: none;
 }
 
 .settings-page__tab:focus-visible {

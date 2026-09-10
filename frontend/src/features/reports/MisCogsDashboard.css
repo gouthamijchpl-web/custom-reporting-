@@ -194,8 +194,8 @@
 .mis-cogs-table__row--section td {
   height: 35px;
   color: #fff;
-  background: #3f73bd;
-  border-bottom-color: #315f9e;
+  background: #374151;
+  border-bottom-color: #1f2937;
   border-right-color: rgba(255, 255, 255, .26);
   font-weight: var(--weight-bold);
 }
@@ -205,7 +205,7 @@
 }
 
 .mis-cogs-table__row--section td:last-child {
-  background: #3f73bd;
+  background: #374151;
   border-left-color: rgba(255, 255, 255, .26);
 }
 
@@ -213,13 +213,13 @@
 .mis-cogs-table tr[data-row-key='indirectExpenses'] th,
 .mis-cogs-table tr[data-row-key='oneOffExpenses'] th {
   color: #fff;
-  background: #3f73bd;
+  background: #374151;
 }
 
 .mis-cogs-table__row--key th,
 .mis-cogs-table__row--key td {
   color: #fff;
-  background: #cf570f;
+  background: #f97316;
   border-right-color: rgba(255, 255, 255, .25);
   font-weight: var(--weight-bold);
 }
@@ -227,7 +227,7 @@
 .mis-cogs-table__row--positive th,
 .mis-cogs-table__row--positive td {
   color: #fff;
-  background: #65a843;
+  background: #ea580c;
   border-right-color: rgba(255, 255, 255, .25);
   font-weight: var(--weight-bold);
 }
@@ -235,8 +235,8 @@
 .mis-cogs-table__row--subtotal th,
 .mis-cogs-table__row--subtotal td {
   color: #fff;
-  background: #9b9e9c;
-  border-top: 1px solid #878b88;
+  background: #64748b;
+  border-top: 1px solid #475569;
   border-right-color: rgba(255, 255, 255, .3);
   font-weight: var(--weight-semibold);
 }
@@ -244,8 +244,8 @@
 .mis-cogs-table__row--strong-subtotal th,
 .mis-cogs-table__row--strong-subtotal td {
   color: #fff;
-  background: #65a843;
-  border-top: 1px solid #508d32;
+  background: #f97316;
+  border-top: 1px solid #ea580c;
   border-right-color: rgba(255, 255, 255, .25);
   font-weight: var(--weight-bold);
 }
@@ -253,8 +253,8 @@
 .mis-cogs-table__row--result th,
 .mis-cogs-table__row--result td {
   color: #fff;
-  background: #65a843;
-  border-top: 1px solid #508d32;
+  background: #ea580c;
+  border-top: 1px solid #c2410c;
   border-right-color: rgba(255, 255, 255, .25);
   font-weight: var(--weight-bold);
 }
@@ -273,7 +273,7 @@
 
 .mis-cogs-table tr[data-row-key='sales'] td:last-child,
 .mis-cogs-table tr[data-row-key='sales'] th {
-  background: #cf570f;
+  background: #f97316;
 }
 
 .mis-cogs-table tr[data-row-key='grossProfit'] td:last-child,
@@ -282,7 +282,7 @@
 .mis-cogs-table tr[data-row-key='contribution'] th,
 .mis-cogs-table tr[data-row-key='netOperatingProfit'] td:last-child,
 .mis-cogs-table tr[data-row-key='netOperatingProfit'] th {
-  background: #65a843;
+  background: #ea580c;
 }
 
 .mis-cogs-table tr[data-row-key='totalDirectExpenses'] td:last-child,
@@ -291,7 +291,7 @@
 .mis-cogs-table tr[data-row-key='totalIndirectExpenses'] th,
 .mis-cogs-table tr[data-row-key='totalOneOffExpenses'] td:last-child,
 .mis-cogs-table tr[data-row-key='totalOneOffExpenses'] th {
-  background: #9b9e9c;
+  background: #64748b;
 }
 
 .mis-cogs-table tr[data-row-key='financeCost'] th,
@@ -343,16 +343,16 @@
 .mis-cogs-table tr.mis-cogs-table__row--manual-orange th,
 .mis-cogs-table tr.mis-cogs-table__row--manual-orange td,
 .mis-cogs-table tr.mis-cogs-table__row--manual-orange td:last-child {
-  color: #fff;
-  background: #cf570f;
-  border-right-color: rgba(255, 255, 255, .25);
+  color: #92400e;
+  background: #fff7ed;
+  border-right-color: #fcd34d;
 }
 
 .mis-cogs-table tr.mis-cogs-table__row--manual-green th,
 .mis-cogs-table tr.mis-cogs-table__row--manual-green td,
 .mis-cogs-table tr.mis-cogs-table__row--manual-green td:last-child {
   color: #fff;
-  background: #65a843;
+  background: #16a34a;
   border-right-color: rgba(255, 255, 255, .25);
 }
 
@@ -368,7 +368,7 @@
 .mis-cogs-table tr.mis-cogs-table__row--manual-grey td,
 .mis-cogs-table tr.mis-cogs-table__row--manual-grey td:last-child {
   color: #fff;
-  background: #9b9e9c;
+  background: #64748b;
   border-right-color: rgba(255, 255, 255, .3);
 }
 
@@ -513,10 +513,10 @@
   border-radius: 4px;
 }
 
-.mis-manual-row-color--orange > span { background: #cf570f; border-color: #b94908; }
-.mis-manual-row-color--green > span { background: #65a843; border-color: #508d32; }
+.mis-manual-row-color--orange > span { background: #f59e0b; border-color: #d97706; }
+.mis-manual-row-color--green > span { background: #16a34a; border-color: #166534; }
 .mis-manual-row-color--blue > span { background: #3f73bd; border-color: #315f9e; }
-.mis-manual-row-color--grey > span { background: #9b9e9c; border-color: #878b88; }
+.mis-manual-row-color--grey > span { background: #64748b; border-color: #475569; }
 
 .mis-manual-row-form__months legend {
   padding: 0 6px;

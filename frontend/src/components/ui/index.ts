@@ -1,5 +1,6 @@
 export { Alert } from './Alert';
 export type { AlertVariant } from './Alert';
+export { AnimatedTabIndicator } from './AnimatedTabIndicator';
 export { Badge } from './Badge';
 export type { BadgeTone } from './Badge';
 export { Button } from './Button';

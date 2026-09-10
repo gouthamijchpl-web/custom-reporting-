@@ -10,6 +10,8 @@ import type {
   GstinRequest,
   EntityBook,
   BookRequest,
+  CostingPolicy,
+  UpdateCostingPolicyRequest,
 } from '@/types';
 
 /** Entity endpoints for the signed-in account. */
@@ -57,6 +59,11 @@ export const entityApi = {
     httpClient.patch<EntityBook>(`/entities/${entityId}/books/${id}/status`, { active }),
   archiveBook: (entityId: string, id: string) =>
     httpClient.delete<void>(`/entities/${entityId}/books/${id}`),
+
+  getCostingPolicy: (entityId: string) =>
+    httpClient.get<CostingPolicy>(`/entities/${entityId}/costing-policy`),
+  updateCostingPolicy: (entityId: string, request: UpdateCostingPolicyRequest) =>
+    httpClient.put<CostingPolicy>(`/entities/${entityId}/costing-policy`, request),
 
   /** Makes an entity active; returns the refreshed list and selection. */
   select: (entityId: string) => httpClient.put<EntityListResponse>('/entities/selection', { entityId }),

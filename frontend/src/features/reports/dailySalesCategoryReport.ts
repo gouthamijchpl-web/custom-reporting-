@@ -4,7 +4,9 @@ import {
   normalizeReportingProduct,
   remapImportFile,
 } from '@/features/uploads/inventoryImport';
-import { uploadApi } from '@/api';
+import { entityApi, uploadApi } from '@/api';
+import { calculateGrossProfitLines } from './grossProfitEngine';
+import type { GrossProfitLine } from './grossProfitEngine';
 import type {
   ImportedInventoryFile,
   ImportContext,
@@ -48,6 +50,7 @@ export interface DailySalesCategorySource {
   latestSalesDate: string | null;
   sourceFileCount: number;
   openingStockFileCount: number;
+  grossProfitLines?: GrossProfitLine[];
 }
 
 type UploadsByType = Partial<Record<ImportKind, Array<ImportedInventoryFile | LegacyImportedFile>>>;
@@ -169,7 +172,10 @@ export function loadDailySalesCategorySource(
   if (cached) return Promise.resolve(cached);
   const pending = sourceRequests.get(scopeId);
   if (pending) return pending;
-  const requestPromise = uploadApi.load<UploadsByType>(context.entity.id, context.branch?.id ?? null).then(async (stored) => {
+  const requestPromise = Promise.all([
+    uploadApi.load<UploadsByType>(context.entity.id, context.branch?.id ?? null),
+    entityApi.getCostingPolicy(context.entity.id),
+  ]).then(async ([stored, costingPolicy]) => {
     let uploadsByType = stored.uploadsByType;
     if (!hasUploadedFiles(uploadsByType)) {
       const legacy = await readLegacyUploads(scopeId);
@@ -195,6 +201,7 @@ export function loadDailySalesCategorySource(
       latestSalesDate,
       sourceFileCount: salesFiles.length + purchaseFiles.length,
       openingStockFileCount: openingStockFiles.length,
+      grossProfitLines: calculateGrossProfitLines(sales, purchases, openingStock, costingPolicy),
     };
     sourceCache.set(scopeId, source);
     return source;
@@ -218,70 +225,10 @@ function categoryFor(row: NormalizedInventoryRecord): string {
   return normalizeReportingProduct(row.finalProductType) || 'UNMAPPED CATEGORY';
 }
 
-function itemKey(row: NormalizedInventoryRecord): string | null {
-  const identifier = row.skuCode || row.articleCode || row.itemCode;
-  if (!identifier) return null;
-  return identifier.trim().toLocaleUpperCase();
-}
-
 function rowValue(row: NormalizedInventoryRecord): number {
   if (row.taxableValue != null && Number.isFinite(row.taxableValue)) return row.taxableValue;
   const unitRate = row.transactionType === 'sales' ? row.salesRate : row.rate;
   return row.quantity != null && unitRate != null ? row.quantity * unitRate : 0;
-}
-
-interface CostPoint {
-  date: string;
-  cumulativeQuantity: number;
-  cumulativeValue: number;
-}
-
-function buildPurchaseCostIndex(purchases: NormalizedInventoryRecord[]): Map<string, CostPoint[]> {
-  const grouped = new Map<string, NormalizedInventoryRecord[]>();
-  for (const purchase of purchases) {
-    const key = itemKey(purchase);
-    if (!key || !purchase.invoiceDate || purchase.quantity == null || purchase.quantity <= 0) continue;
-    const list = grouped.get(key) ?? [];
-    list.push(purchase);
-    grouped.set(key, list);
-  }
-
-  const index = new Map<string, CostPoint[]>();
-  for (const [key, rows] of grouped) {
-    let cumulativeQuantity = 0;
-    let cumulativeValue = 0;
-    const points = rows
-      .sort((left, right) => `${left.invoiceDate}|${left.transactionKey}`.localeCompare(`${right.invoiceDate}|${right.transactionKey}`))
-      .map((row) => {
-        cumulativeQuantity += row.quantity ?? 0;
-        cumulativeValue += rowValue(row);
-        return { date: row.invoiceDate ?? '', cumulativeQuantity, cumulativeValue };
-      });
-    index.set(key, points);
-  }
-  return index;
-}
-
-function weightedAverageCost(
-  sale: NormalizedInventoryRecord,
-  purchaseCostIndex: Map<string, CostPoint[]>,
-): number | null {
-  const key = itemKey(sale);
-  if (!key || !sale.invoiceDate) return null;
-  const points = purchaseCostIndex.get(key);
-  if (!points?.length) return null;
-  let low = 0;
-  let high = points.length - 1;
-  let match = -1;
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2);
-    if (points[middle].date <= sale.invoiceDate) {
-      match = middle;
-      low = middle + 1;
-    } else high = middle - 1;
-  }
-  if (match < 0 || points[match].cumulativeQuantity <= 0) return null;
-  return points[match].cumulativeValue / points[match].cumulativeQuantity;
 }
 
 function emptyRow(category: string): DailySalesCategoryRow {
@@ -311,7 +258,9 @@ export function calculateDailySalesCategoryReport(
   reportDate: string,
 ): DailySalesCategoryReportResult {
   const financialYear = financialYearFor(reportDate);
-  const purchaseCostIndex = buildPurchaseCostIndex(source.purchases);
+  const grossProfitIndex = new Map((source.grossProfitLines
+    ?? calculateGrossProfitLines(source.sales, source.purchases, source.openingStock))
+    .map((line) => [line.transactionKey, line]));
   const categories = new Map<string, DailySalesCategoryRow>();
   let missingCostRowCount = 0;
   let missingCostSalesValue = 0;
@@ -326,10 +275,9 @@ export function calculateDailySalesCategoryReport(
     const row = getCategory(categoryFor(sale));
     const quantity = sale.quantity ?? 0;
     const salesValue = rowValue(sale);
-    const explicitUnitCost = sale.purchasePrice != null && sale.purchasePrice > 0 ? sale.purchasePrice : null;
-    const unitCost = explicitUnitCost ?? weightedAverageCost(sale, purchaseCostIndex);
-    const purchaseValue = unitCost == null ? 0 : quantity * unitCost;
-    if (unitCost == null) {
+    const grossProfitLine = grossProfitIndex.get(sale.transactionKey);
+    const purchaseValue = grossProfitLine?.cogsAmount ?? 0;
+    if (grossProfitLine?.cogsAmount == null) {
       missingCostRowCount += 1;
       missingCostSalesValue += salesValue;
     }
@@ -337,10 +285,12 @@ export function calculateDailySalesCategoryReport(
     row.ytdSalesQty += quantity;
     row.ytdTaxableValue += salesValue;
     row.ytdPurchaseValue += purchaseValue;
+    row.ytdGrossProfit += grossProfitLine?.grossProfitAmount ?? 0;
     if (sale.invoiceDate === reportDate) {
       row.dailySalesQty += quantity;
       row.dailySalesValue += salesValue;
       row.dailyPurchaseValue += purchaseValue;
+      row.dailyGrossProfit += grossProfitLine?.grossProfitAmount ?? 0;
     }
   }
 
@@ -354,10 +304,8 @@ export function calculateDailySalesCategoryReport(
   const rows = [...categories.values()]
     .map((row) => ({
       ...row,
-      dailyGrossProfit: row.dailySalesValue - row.dailyPurchaseValue,
-      dailyGmPercent: gmPercent(row.dailySalesValue - row.dailyPurchaseValue, row.dailySalesValue),
-      ytdGrossProfit: row.ytdTaxableValue - row.ytdPurchaseValue,
-      ytdGmPercent: gmPercent(row.ytdTaxableValue - row.ytdPurchaseValue, row.ytdTaxableValue),
+      dailyGmPercent: gmPercent(row.dailyGrossProfit, row.dailySalesValue),
+      ytdGmPercent: gmPercent(row.ytdGrossProfit, row.ytdTaxableValue),
     }))
     .sort((left, right) => left.category.localeCompare(right.category));
 

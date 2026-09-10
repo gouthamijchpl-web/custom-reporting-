@@ -2,6 +2,7 @@ import { normalizeReportingProduct } from '@/features/uploads/inventoryImport';
 import type { NormalizedInventoryRecord } from '@/features/uploads/inventoryImport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
 import { financialMonths, financialYearLabel } from './monthlyCategoryReport';
+import { calculateGrossProfitLines } from './grossProfitEngine';
 
 export interface SkuProfitabilityRow {
   stockNumber: string;
@@ -58,12 +59,6 @@ interface MutableSkuProfitabilityRow {
   missingPurchaseCostSalesValue: number;
 }
 
-interface CostPoint {
-  date: string;
-  cumulativeQuantity: number;
-  cumulativeValue: number;
-}
-
 interface DescriptionPoint {
   date: string;
   description: string;
@@ -87,34 +82,6 @@ function transactionValue(row: NormalizedInventoryRecord): number {
   if (row.taxableValue != null && Number.isFinite(row.taxableValue)) return row.taxableValue;
   const rate = row.transactionType === 'sales' ? row.salesRate : row.rate;
   return row.quantity != null && rate != null ? row.quantity * rate : 0;
-}
-
-function buildPurchaseCostIndex(purchases: readonly NormalizedInventoryRecord[]): Map<string, CostPoint[]> {
-  const grouped = new Map<string, NormalizedInventoryRecord[]>();
-  for (const purchase of purchases) {
-    if (!purchase.invoiceDate || purchase.quantity == null || purchase.quantity <= 0) continue;
-    for (const identifier of identifierCandidates(purchase)) {
-      const key = scopedIdentifierKey(purchase, identifier);
-      const rows = grouped.get(key) ?? [];
-      rows.push(purchase);
-      grouped.set(key, rows);
-    }
-  }
-
-  const index = new Map<string, CostPoint[]>();
-  for (const [key, rows] of grouped) {
-    let cumulativeQuantity = 0;
-    let cumulativeValue = 0;
-    const points = [...rows]
-      .sort((left, right) => `${left.invoiceDate}|${left.transactionKey}`.localeCompare(`${right.invoiceDate}|${right.transactionKey}`))
-      .map((purchase) => {
-        cumulativeQuantity += purchase.quantity ?? 0;
-        cumulativeValue += transactionValue(purchase);
-        return { date: purchase.invoiceDate ?? '', cumulativeQuantity, cumulativeValue };
-      });
-    index.set(key, points);
-  }
-  return index;
 }
 
 function buildPurchaseDescriptionIndex(purchases: readonly NormalizedInventoryRecord[]): Map<string, DescriptionPoint[]> {
@@ -145,22 +112,6 @@ function latestPointIndex<T extends { date: string }>(points: readonly T[], date
     } else high = middle - 1;
   }
   return match;
-}
-
-function historicalPurchaseCost(
-  sale: NormalizedInventoryRecord,
-  purchaseCostIndex: ReadonlyMap<string, CostPoint[]>,
-): number | null {
-  if (!sale.invoiceDate) return null;
-  for (const identifier of identifierCandidates(sale)) {
-    const points = purchaseCostIndex.get(scopedIdentifierKey(sale, identifier));
-    if (!points?.length) continue;
-    const match = latestPointIndex(points, sale.invoiceDate);
-    if (match >= 0 && points[match].cumulativeQuantity > 0) {
-      return points[match].cumulativeValue / points[match].cumulativeQuantity;
-    }
-  }
-  return null;
 }
 
 function saleDescription(
@@ -210,7 +161,9 @@ export function calculateSkuProfitabilityReport(
   const months = financialMonths(startYear);
   const periodStart = months[0].startDate;
   const periodEnd = months[11].endDate;
-  const purchaseCostIndex = buildPurchaseCostIndex(source.purchases);
+  const grossProfitIndex = new Map((source.grossProfitLines
+    ?? calculateGrossProfitLines(source.sales, source.purchases, source.openingStock))
+    .map((line) => [line.transactionKey, line]));
   const purchaseDescriptionIndex = buildPurchaseDescriptionIndex(source.purchases);
   const grouped = new Map<string, MutableSkuProfitabilityRow>();
   let missingPurchaseCostCount = 0;
@@ -241,16 +194,15 @@ export function calculateSkuProfitabilityReport(
     };
     const quantity = sale.quantity ?? 0;
     const taxableValue = transactionValue(sale);
-    const explicitCost = sale.purchasePrice != null && sale.purchasePrice > 0 ? sale.purchasePrice : null;
-    const unitCost = explicitCost ?? historicalPurchaseCost(sale, purchaseCostIndex);
+    const grossProfitLine = grossProfitIndex.get(sale.transactionKey);
     row.salesQuantity += quantity;
     row.taxableValue += taxableValue;
-    if (quantity !== 0 && unitCost == null) {
+    if (quantity !== 0 && grossProfitLine?.cogsAmount == null) {
       row.missingPurchaseCostCount += 1;
       row.missingPurchaseCostSalesValue += taxableValue;
       missingPurchaseCostCount += 1;
       missingPurchaseCostSalesValue += taxableValue;
-    } else row.knownPurchaseValue += quantity * (unitCost ?? 0);
+    } else row.knownPurchaseValue += grossProfitLine?.cogsAmount ?? 0;
     if (!sale.finalProductType.trim()) unmappedProductCount += 1;
     if (!sale.style.trim()) unmappedStyleCount += 1;
     grouped.set(key, row);

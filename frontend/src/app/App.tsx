@@ -4,6 +4,7 @@ import { BranchProvider } from '@/context/BranchProvider';
 import { EntityProvider } from '@/context/EntityProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { ToastProvider } from '@/context/ToastProvider';
+import { useTableKeyboardNavigation } from '@/hooks/useTableKeyboardNavigation';
 import { AppRoutes } from './AppRoutes';
 
 /**
@@ -14,6 +15,8 @@ import { AppRoutes } from './AppRoutes';
  * all three contexts.
  */
 export function App() {
+  useTableKeyboardNavigation();
+
   return (
     <ToastProvider>
       <AuthProvider>

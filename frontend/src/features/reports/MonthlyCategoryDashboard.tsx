@@ -81,7 +81,11 @@ function SortHeader({ label, column, activeColumn, direction, onSort }: {
 }) {
   const active = column === activeColumn;
   return <th scope="col" aria-sort={active ? direction : 'none'}>
-    <button type="button" className="category-sales-table__sort" onClick={() => onSort(column)}>
+    <button
+      type="button"
+      className="category-sales-table__sort"
+      onClick={() => onSort(column)}
+    >
       {label}<span aria-hidden="true">{active ? direction === 'ascending' ? '↑' : '↓' : '↕'}</span>
     </button>
   </th>;
@@ -252,7 +256,7 @@ export function MonthlyCategoryDashboard() {
       </header>
       <div className="category-sales-table-wrap monthly-category-table-wrap">
         <table id="monthly-category-table" className="category-sales-table monthly-category-table">
-          <caption className="sr-only">Category-wise Sales, Purchases and Gross Profit for {selectedMonth.label}</caption>
+          <caption className="sr-only">Category-wise Sales, Purchases and Gross Profit for {selectedMonth.label}. Use the Arrow keys to move between table cells.</caption>
           <thead><tr>
             <SortHeader label="Category" column="category" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
             <SortHeader label="Sales QTY" column="salesQty" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />

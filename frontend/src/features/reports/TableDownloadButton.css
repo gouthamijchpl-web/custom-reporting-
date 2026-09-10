@@ -1,0 +1,13 @@
+.table-download-button {
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.table-download-button > svg {
+  color: #c2410c;
+}
+
+.table-download-button:hover:not(:disabled) {
+  border-color: #f97316;
+  background: color-mix(in srgb, var(--accent-surface) 55%, var(--surface-raised));
+}

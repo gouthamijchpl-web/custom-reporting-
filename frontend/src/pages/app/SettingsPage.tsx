@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { LoadingState, PageHeader } from '@/components/ui';
+import type { KeyboardEvent } from 'react';
+import { AnimatedTabIndicator, LoadingState, PageHeader } from '@/components/ui';
 import { EntitiesSection, SecuritySection, WorkspaceSetupSection } from '@/features/settings';
 import { TeamSection } from '@/features/team';
 import { useAuth } from '@/hooks';
@@ -39,6 +40,19 @@ export function SettingsPage() {
   const visibleTabs = useMemo(() => TABS.filter((tab) => !tab.adminOnly || isAdmin), [isAdmin]);
   const selectedTab = activeTab ?? (isAdmin ? 'teams' : 'security');
 
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + visibleTabs.length) % visibleTabs.length;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % visibleTabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = visibleTabs.length - 1;
+    const nextTab = visibleTabs[nextIndex];
+    setActiveTab(nextTab.id);
+    document.getElementById(`settings-tab-${nextTab.id}`)?.focus();
+  };
+
   if (!user) {
     return <LoadingState fillHeight />;
   }
@@ -48,7 +62,7 @@ export function SettingsPage() {
       <PageHeader title="Settings" description="Manage your workspace, team and security." />
 
       <div className="settings-page__tabs" role="tablist" aria-label="Settings sections">
-        {visibleTabs.map((tab) => (
+        {visibleTabs.map((tab, index) => (
           <button
             key={tab.id}
             type="button"
@@ -56,12 +70,15 @@ export function SettingsPage() {
             id={`settings-tab-${tab.id}`}
             aria-selected={selectedTab === tab.id}
             aria-controls={`settings-panel-${tab.id}`}
+            tabIndex={selectedTab === tab.id ? 0 : -1}
             className={cx('settings-page__tab', selectedTab === tab.id && 'settings-page__tab--active')}
             onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
           >
             {tab.label}
           </button>
         ))}
+        <AnimatedTabIndicator activeKey={selectedTab} />
       </div>
 
       <div

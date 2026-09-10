@@ -2,17 +2,19 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 import { uploadApi } from '@/api';
 import { PlusIcon, SearchIcon, UploadIcon } from '@/components/icons';
-import { Badge, Button, Modal, PageHeader, TextInput } from '@/components/ui';
+import { AnimatedTabIndicator, Badge, Button, Modal, PageHeader, TextInput } from '@/components/ui';
 import {
   analyzeImportFile, CURRENT_NORMALIZATION_VERSION, markFileDuplicates, migrateLegacyImportFile, remapImportFile,
 } from '@/features/uploads/inventoryImport';
 import type { ImportedInventoryFile, ImportContext, ImportKind, ImportRow, LegacyImportedFile } from '@/features/uploads/inventoryImport';
 import { invalidateDailySalesCategorySource } from '@/features/reports/dailySalesCategoryReport';
+import { GrossProfitTable } from '@/features/uploads/GrossProfitTable';
 import { useBranches, useCloudPreference, useEntities } from '@/hooks';
 import { cx } from '@/utils/classNames';
 import './DataUploadPage.css';
 
 type UploadType = ImportKind;
+type VisibleType = UploadType | 'gross-profit';
 type UploadsByType = Partial<Record<UploadType, ImportedInventoryFile[]>>;
 
 interface UploadTypeDefinition {
@@ -33,6 +35,10 @@ const UPLOAD_TYPES: readonly UploadTypeDefinition[] = [
   { id: 'purchases', label: 'Purchase', description: 'Item-wise purchase bill transactions.', templateUrl: '/templates/opening-purchase-import-template.xlsx', templateFileName: 'opening-purchase-import-template.xlsx' },
 ];
 const CREATE_UPLOAD_TYPES = UPLOAD_TYPES;
+const SELECTOR_TYPES: ReadonlyArray<{ id: VisibleType; label: string }> = [
+  ...UPLOAD_TYPES,
+  { id: 'gross-profit', label: 'Gross Profit' },
+];
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx'] as const;
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const MAX_PREVIEW_ROWS = 200;
@@ -138,7 +144,7 @@ function statusTone(value: string): 'success' | 'warning' | 'neutral' {
   return 'neutral';
 }
 
-function UploadSelectorIcon({ type }: { type: UploadType }) {
+function UploadSelectorIcon({ type }: { type: VisibleType }) {
   return <svg className="data-upload-actions__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
     {type === 'opening-stock' ? <>
       <path d="m4 7.5 8-4 8 4-8 4-8-4Z" />
@@ -147,9 +153,11 @@ function UploadSelectorIcon({ type }: { type: UploadType }) {
     </> : type === 'sales' ? <>
       <path d="M4 18 10 12l4 4 6-8" />
       <path d="M15 8h5v5" />
-    </> : <>
+    </> : type === 'purchases' ? <>
       <path d="M5 8h14l-1 12H6L5 8Z" />
       <path d="M9 9V6a3 3 0 0 1 6 0v3" />
+    </> : <>
+      <path d="M5 19V9" /><path d="M10 19V5" /><path d="M15 19v-7" /><path d="M20 19V3" />
     </>}
   </svg>;
 }
@@ -222,8 +230,8 @@ export function DataUploadPage() {
   const skipNextSaveScopeRef = useRef<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [activeType, setActiveType] = useState<UploadType>('sales');
-  const [storedVisibleType, setVisibleType] = useCloudPreference<UploadType>('uploads.visible-type', 'opening-stock');
-  const visibleType = UPLOAD_TYPES.some(({ id }) => id === storedVisibleType) ? storedVisibleType : 'opening-stock';
+  const [storedVisibleType, setVisibleType] = useCloudPreference<VisibleType>('uploads.visible-type', 'opening-stock');
+  const visibleType = SELECTOR_TYPES.some(({ id }) => id === storedVisibleType) ? storedVisibleType : 'opening-stock';
   const [fileError, setFileError] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -238,7 +246,7 @@ export function DataUploadPage() {
     [loadedScopeId, uploadScopeId, uploadsByType],
   );
   const activeUploads = currentScopeUploads[activeType] ?? [];
-  const visibleUploads = currentScopeUploads[visibleType] ?? [];
+  const visibleUploads = visibleType === 'gross-profit' ? [] : currentScopeUploads[visibleType] ?? [];
   const storageLoading = selectedEntityId !== null && (uploadScopeId === null || loadedScopeId !== uploadScopeId);
   const storageError = storageIssue?.scopeId === uploadScopeId ? storageIssue.message : null;
 
@@ -286,11 +294,11 @@ export function DataUploadPage() {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
     let nextIndex = index;
-    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + UPLOAD_TYPES.length) % UPLOAD_TYPES.length;
-    if (event.key === 'ArrowRight') nextIndex = (index + 1) % UPLOAD_TYPES.length;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + SELECTOR_TYPES.length) % SELECTOR_TYPES.length;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % SELECTOR_TYPES.length;
     if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = UPLOAD_TYPES.length - 1;
-    const nextType = UPLOAD_TYPES[nextIndex];
+    if (event.key === 'End') nextIndex = SELECTOR_TYPES.length - 1;
+    const nextType = SELECTOR_TYPES[nextIndex];
     setVisibleType(nextType.id);
     document.getElementById(`data-upload-selector-${nextType.id}`)?.focus();
   };
@@ -336,13 +344,14 @@ export function DataUploadPage() {
     {!selectedEntity && <div className="data-upload-page__notice" role="status">Select an active entity from the header before uploading a file.</div>}
     {selectedEntity && branchStatus === 'error' && <div className="data-upload-page__notice" role="alert">{branchErrorMessage ?? 'Branches could not be loaded. Open the Branch selector to retry.'}</div>}
     {storageError && <div className="data-upload-page__notice" role="alert">{storageError}</div>}
-    <div className="data-upload-controls"><div className="data-upload-actions" role="tablist" aria-label="Choose data upload type">{UPLOAD_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`data-upload-selector-${item.id}`} aria-selected={visibleType === item.id} tabIndex={visibleType === item.id ? 0 : -1} className={cx('data-upload-actions__tab', visibleType === item.id && 'data-upload-actions__tab--active')} onClick={() => setVisibleType(item.id)} onKeyDown={(event) => handleSelectorKeyDown(event, index)} disabled={!selectedEntity || storageLoading}><UploadSelectorIcon type={item.id} /><span>{item.label}</span></button>)}</div><Button size="sm" leadingIcon={visibleType === 'opening-stock' ? <UploadIcon size={16} /> : <PlusIcon size={16} />} onClick={() => openCreate(visibleType)} disabled={!selectedEntity || storageLoading}>{visibleType === 'opening-stock' ? 'Upload file' : 'Create'}</Button></div>
+    <div className="data-upload-controls"><div className="data-upload-actions" role="tablist" aria-label="Choose data upload type">{SELECTOR_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`data-upload-selector-${item.id}`} aria-selected={visibleType === item.id} tabIndex={visibleType === item.id ? 0 : -1} className={cx('data-upload-actions__tab', visibleType === item.id && 'data-upload-actions__tab--active')} onClick={() => setVisibleType(item.id)} onKeyDown={(event) => handleSelectorKeyDown(event, index)} disabled={!selectedEntity || storageLoading}><UploadSelectorIcon type={item.id} /><span>{item.label}</span></button>)}<AnimatedTabIndicator activeKey={visibleType} /></div>{visibleType !== 'gross-profit' && <Button size="sm" leadingIcon={visibleType === 'opening-stock' ? <UploadIcon size={16} /> : <PlusIcon size={16} />} onClick={() => openCreate(visibleType)} disabled={!selectedEntity || storageLoading}>{visibleType === 'opening-stock' ? 'Upload file' : 'Create'}</Button>}</div>
     {selectedEntity && branchStatus !== 'error' && (storageLoading ? <div className="data-upload-result__empty" role="status">{branchStatus === 'loading' ? 'Loading client branches…' : 'Restoring uploaded files…'}</div>
+      : visibleType === 'gross-profit' ? <GrossProfitTable entityId={selectedEntity.id} uploadsByType={currentScopeUploads} />
       : visibleUploads.length > 0 ? <div className="data-upload-result">{visibleUploads.map((file) => <UploadedDataTable key={file.id} file={file} title={`${getUploadType(visibleType).label} data`} />)}</div>
         : <div className="data-upload-result__empty" role="status">No {getUploadType(visibleType).label.toLowerCase()} file uploaded yet. Use {visibleType === 'opening-stock' ? 'Upload file' : 'Create'} to upload one.</div>)}
 
     <Modal isOpen={createOpen} title="Upload data" description="Choose a data type and upload one or more files. Tables appear on the Data Upload page after closing." onClose={closeCreate} footer={<Button variant="secondary" onClick={closeCreate}>Close</Button>} size="xl">
-      <div className="upload-type-tabs" role="tablist" aria-label="Data upload type">{CREATE_UPLOAD_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`upload-type-tab-${item.id}`} aria-selected={activeType === item.id} aria-controls={`upload-type-panel-${item.id}`} tabIndex={activeType === item.id ? 0 : -1} className={cx('upload-type-tabs__tab', activeType === item.id && 'upload-type-tabs__tab--active')} onClick={() => chooseType(item.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><span>{item.label}</span><small>{item.description}</small></button>)}</div>
+      <div className="upload-type-tabs" role="tablist" aria-label="Data upload type">{CREATE_UPLOAD_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`upload-type-tab-${item.id}`} aria-selected={activeType === item.id} aria-controls={`upload-type-panel-${item.id}`} tabIndex={activeType === item.id ? 0 : -1} className={cx('upload-type-tabs__tab', activeType === item.id && 'upload-type-tabs__tab--active')} onClick={() => chooseType(item.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><span>{item.label}</span><small>{item.description}</small></button>)}<AnimatedTabIndicator activeKey={activeType} /></div>
       <div className="item-wise-workflow" role="tabpanel" id={`upload-type-panel-${activeType}`} aria-labelledby={`upload-type-tab-${activeType}`}><div className="upload-workflow-panel">
         <div className="upload-workflow-panel__heading"><div><Badge tone="accent">Item-wise</Badge><h3>Upload {type.label.toLowerCase()} files</h3><p>Headers can be on any of the first 20 rows in any sheet. CSV and XLSX files up to 25 MB each are supported.</p></div><Button variant="secondary" size="sm" onClick={downloadTemplate}>Download template</Button></div>
         <div className={cx('file-dropzone', dragging && 'file-dropzone--dragging', fileError && 'file-dropzone--error')} onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }} onDrop={handleDrop}>

@@ -72,14 +72,14 @@
 
 .button--secondary {
   background-color: var(--surface-raised);
-  border-color: var(--border-default);
-  color: var(--text-primary);
+  border-color: #fdba74;
+  color: #c2410c;
   box-shadow: var(--shadow-xs);
 }
 
 .button--secondary:hover:not(:disabled) {
   background-color: var(--surface-hover);
-  border-color: var(--border-strong);
+  border-color: #f97316;
 }
 
 .button--ghost {

@@ -1,8 +1,11 @@
 package com.customreporting.entity.controller;
 
 import com.customreporting.entity.dto.EntityConfigurationDtos.*;
+import com.customreporting.entity.dto.CostingPolicyDtos.CostingPolicyRequest;
+import com.customreporting.entity.dto.CostingPolicyDtos.CostingPolicyResponse;
 import com.customreporting.entity.dto.UpdateStatusRequest;
 import com.customreporting.entity.service.EntityConfigurationService;
+import com.customreporting.entity.service.EntityCostingPolicyService;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +18,24 @@ import java.util.UUID;
 @RequestMapping("/api/v1/entities/{entityId}")
 public class EntityConfigurationController {
     private final EntityConfigurationService service;
-    public EntityConfigurationController(EntityConfigurationService service) { this.service = service; }
+    private final EntityCostingPolicyService costingPolicyService;
+    public EntityConfigurationController(EntityConfigurationService service,
+                                         EntityCostingPolicyService costingPolicyService) {
+        this.service = service;
+        this.costingPolicyService = costingPolicyService;
+    }
+
+    @GetMapping("/costing-policy")
+    public CostingPolicyResponse costingPolicy(@PathVariable UUID entityId) {
+        return costingPolicyService.get(entityId);
+    }
+
+    @PutMapping("/costing-policy")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CostingPolicyResponse updateCostingPolicy(@PathVariable UUID entityId,
+                                                     @Valid @RequestBody CostingPolicyRequest request) {
+        return costingPolicyService.update(entityId, request);
+    }
 
     @GetMapping("/branches") public List<BranchResponse> branches(@PathVariable UUID entityId) { return service.branches(entityId); }
     @PostMapping("/branches")

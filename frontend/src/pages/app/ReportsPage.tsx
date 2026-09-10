@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useTransition } from 'react';
+import type { KeyboardEvent } from 'react';
 import {
   AnalyticsIcon,
   CalendarReportIcon,
@@ -13,7 +14,7 @@ import {
   ShieldIcon,
   UsersIcon,
 } from '@/components/icons';
-import { Badge, PageHeader } from '@/components/ui';
+import { AnimatedTabIndicator, Badge, PageHeader } from '@/components/ui';
 import { DailySalesCategoryDashboard } from '@/features/reports/DailySalesCategoryDashboard';
 import { DailySalesStyleDashboard } from '@/features/reports/DailySalesStyleDashboard';
 import { MonthlyCategoryDashboard } from '@/features/reports/MonthlyCategoryDashboard';
@@ -49,6 +50,8 @@ const REPORT_MASTER: readonly ReportMasterItem[] = [
   { id: 'cheques-tracker', reportName: 'Customer Cheques Tracker', phase: 'phase-2', description: 'Track customer cheques and collection status.', activeStatus: true },
   { id: 'risk-covered-debtors', reportName: 'Risk Covered Debtors', phase: 'phase-2', description: 'Monitor debtor balances covered against risk.', activeStatus: true },
 ];
+
+const REPORT_PHASES: readonly ReportPhase[] = ['phase-1', 'phase-2'];
 
 function phaseLabel(phase: ReportPhase): string {
   return phase === 'phase-1' ? 'Phase - 1' : 'Phase - 2';
@@ -103,6 +106,19 @@ export function ReportsPage() {
     'phase-2': REPORT_MASTER.filter((report) => report.activeStatus && report.phase === 'phase-2').length,
   }), []);
 
+  const handlePhaseKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + REPORT_PHASES.length) % REPORT_PHASES.length;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % REPORT_PHASES.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = REPORT_PHASES.length - 1;
+    const nextPhase = REPORT_PHASES[nextIndex];
+    startNavigation(() => setActivePhase(nextPhase));
+    document.getElementById(`${nextPhase}-tab`)?.focus();
+  };
+
   if (selectedReport) {
     return <div className="reports-page reports-page--detail" aria-busy={isNavigationPending}>
       <button type="button" className="reports-back" onClick={() => startNavigation(() => setSelectedReportId(null))}><ChevronLeftIcon size={16} />Back to Reports</button>
@@ -124,7 +140,7 @@ export function ReportsPage() {
     <PageHeader title="Reports" description="View and manage reports by category." />
 
     <nav className="reports-phase-tabs" role="tablist" aria-label="Report phases">
-      {(['phase-1', 'phase-2'] as const).map((phase) => {
+      {REPORT_PHASES.map((phase, index) => {
         const selected = activePhase === phase;
         return <button
           key={phase}
@@ -135,10 +151,12 @@ export function ReportsPage() {
           aria-controls={`${phase}-panel`}
           tabIndex={selected ? 0 : -1}
           onClick={() => startNavigation(() => setActivePhase(phase))}
+          onKeyDown={(event) => handlePhaseKeyDown(event, index)}
         >
           <span>{phaseLabel(phase)} Reports</span><strong>{phaseCounts[phase]}</strong>
         </button>;
       })}
+      <AnimatedTabIndicator activeKey={activePhase} />
     </nav>
 
     <section id={`${activePhase}-panel`} className="report-phase" role="tabpanel" aria-labelledby={`${activePhase}-tab`}>

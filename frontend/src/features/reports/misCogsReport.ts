@@ -1,5 +1,6 @@
 import type { NormalizedInventoryRecord } from '@/features/uploads/inventoryImport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
+import { calculateGrossProfitLines } from './grossProfitEngine';
 
 export type MisRowKind = 'currency' | 'percentage' | 'section';
 export type MisRowEmphasis = 'normal' | 'key' | 'positive' | 'subtotal' | 'strong-subtotal' | 'result';
@@ -73,12 +74,6 @@ export interface MisCogsReportResult {
   missingCostSalesValue: number;
   missingCostRowsByMonth: readonly number[];
   expenseSectionsConfigured: Readonly<Record<MisExpenseSection, boolean>>;
-}
-
-interface CostPoint {
-  date: string;
-  cumulativeQuantity: number;
-  cumulativeValue: number;
 }
 
 const MONTH_NAMES = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'] as const;
@@ -179,85 +174,6 @@ function transactionValue(row: NormalizedInventoryRecord): number {
   return validNumber(row.quantity) && validNumber(rate) ? row.quantity * rate : 0;
 }
 
-function identifierCandidates(row: NormalizedInventoryRecord): string[] {
-  return [...new Set([row.itemCode, row.skuCode, row.articleCode]
-    .map((value) => value.trim().toLocaleUpperCase())
-    .filter(Boolean))];
-}
-
-function scopedIdentifierKey(row: NormalizedInventoryRecord, identifier: string): string {
-  return `${row.entityId}\u0000${row.branchId ?? ''}\u0000${identifier}`;
-}
-
-function purchaseValue(row: NormalizedInventoryRecord): number | null {
-  if (!validNumber(row.quantity) || row.quantity <= 0) return null;
-  if (validNumber(row.taxableValue) && row.taxableValue >= 0) return row.taxableValue;
-  if (validNumber(row.rate) && row.rate > 0) return row.quantity * row.rate;
-  return null;
-}
-
-function buildPurchaseCostIndex(purchases: readonly NormalizedInventoryRecord[]): Map<string, CostPoint[]> {
-  const grouped = new Map<string, NormalizedInventoryRecord[]>();
-  for (const purchase of purchases) {
-    if (!purchase.invoiceDate || purchaseValue(purchase) == null) continue;
-    for (const identifier of identifierCandidates(purchase)) {
-      const key = scopedIdentifierKey(purchase, identifier);
-      const records = grouped.get(key) ?? [];
-      records.push(purchase);
-      grouped.set(key, records);
-    }
-  }
-
-  const index = new Map<string, CostPoint[]>();
-  for (const [key, records] of grouped) {
-    let cumulativeQuantity = 0;
-    let cumulativeValue = 0;
-    const points = [...records]
-      .sort((left, right) => `${left.invoiceDate}|${left.transactionKey}`.localeCompare(`${right.invoiceDate}|${right.transactionKey}`))
-      .map((record) => {
-        cumulativeQuantity += record.quantity ?? 0;
-        cumulativeValue += purchaseValue(record) ?? 0;
-        return {
-          date: record.invoiceDate ?? '',
-          cumulativeQuantity,
-          cumulativeValue,
-        };
-      });
-    index.set(key, points);
-  }
-  return index;
-}
-
-function latestPointAtOrBefore(points: readonly CostPoint[], date: string): CostPoint | null {
-  let low = 0;
-  let high = points.length - 1;
-  let match = -1;
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2);
-    if (points[middle].date <= date) {
-      match = middle;
-      low = middle + 1;
-    } else high = middle - 1;
-  }
-  return match >= 0 ? points[match] : null;
-}
-
-function historicalUnitCost(
-  sale: NormalizedInventoryRecord,
-  costIndex: ReadonlyMap<string, CostPoint[]>,
-): number | null {
-  if (!sale.invoiceDate) return null;
-  for (const identifier of identifierCandidates(sale)) {
-    const points = costIndex.get(scopedIdentifierKey(sale, identifier));
-    if (!points?.length) continue;
-    const point = latestPointAtOrBefore(points, sale.invoiceDate);
-    if (point && point.cumulativeQuantity > 0) {
-      return point.cumulativeValue / point.cumulativeQuantity;
-    }
-  }
-  return null;
-}
-
 function seriesTotal(values: readonly number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
@@ -355,11 +271,13 @@ export function calculateMisCogsReport(
   const definitions = financialMonths(startYear);
   const monthIndex = new Map(definitions.map((month) => [month.key, month.index]));
   const sales = emptySeries();
-  const cogs = emptySeries();
+  const grossProfit = emptySeries();
   const missingCostRowsByMonth = emptySeries();
   let missingCostRowCount = 0;
   let missingCostSalesValue = 0;
-  const purchaseCostIndex = buildPurchaseCostIndex(source.purchases);
+  const grossProfitIndex = new Map((source.grossProfitLines
+    ?? calculateGrossProfitLines(source.sales, source.purchases, source.openingStock))
+    .map((line) => [line.transactionKey, line]));
 
   for (const sale of source.sales) {
     if (!sale.invoiceDate) continue;
@@ -367,21 +285,17 @@ export function calculateMisCogsReport(
     if (index == null) continue;
     const value = transactionValue(sale);
     const quantity = sale.quantity ?? 0;
-    const explicitUnitCost = validNumber(sale.purchasePrice) && sale.purchasePrice > 0
-      ? sale.purchasePrice
-      : null;
-    const unitCost = explicitUnitCost ?? historicalUnitCost(sale, purchaseCostIndex);
+    const grossProfitLine = grossProfitIndex.get(sale.transactionKey);
     sales[index] += value;
-    if (quantity !== 0 && unitCost == null) {
+    if (quantity !== 0 && grossProfitLine?.cogsAmount == null) {
       missingCostRowsByMonth[index] += 1;
       missingCostRowCount += 1;
       missingCostSalesValue += value;
     } else {
-      cogs[index] += quantity * (unitCost ?? 0);
+      grossProfit[index] += grossProfitLine?.grossProfitAmount ?? 0;
     }
   }
 
-  const grossProfit = subtractSeries(sales, cogs);
   const grossProfitPercent = percentageSeries(grossProfit, sales);
 
   const expenseValues = Object.fromEntries(

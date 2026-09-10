@@ -66,6 +66,25 @@ export interface EntityBranch {
 }
 export interface BranchRequest { name: string; code: string; primaryBranch: boolean; active: boolean; }
 
+export type InventoryCostingMethod = 'FIFO' | 'MOVING_WEIGHTED_AVERAGE';
+export type CostingPolicyApplicationMode = 'RECALCULATE_ALL' | 'EFFECTIVE_DATE';
+export interface CostingPolicyRevision {
+  id: string | null;
+  method: InventoryCostingMethod;
+  effectiveFrom: string | null;
+  createdAt: string | null;
+}
+export interface CostingPolicy {
+  entityId: string;
+  currentMethod: InventoryCostingMethod;
+  revisions: CostingPolicyRevision[];
+}
+export interface UpdateCostingPolicyRequest {
+  method: InventoryCostingMethod;
+  applicationMode: CostingPolicyApplicationMode;
+  effectiveDate: string | null;
+}
+
 export type RegistrationType = 'REGULAR' | 'COMPOSITION' | 'CASUAL_TAXABLE_PERSON' | 'SEZ' | 'OTHER';
 export interface EntityGstin {
   id: string; gstin: string; linkedBookId: string | null; linkedBookName: string | null;

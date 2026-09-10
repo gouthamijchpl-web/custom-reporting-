@@ -1,6 +1,7 @@
 import { normalizeReportingProduct } from '@/features/uploads/inventoryImport';
 import type { NormalizedInventoryRecord } from '@/features/uploads/inventoryImport';
 import type { DailySalesCategorySource } from './dailySalesCategoryReport';
+import { calculateGrossProfitLines } from './grossProfitEngine';
 
 export interface MonthlyCategoryRow {
   category: string;
@@ -50,7 +51,7 @@ interface MutableCategoryRow {
   category: string;
   salesQty: number;
   sales: number;
-  salesCost: number;
+  grossProfit: number;
   purchaseQty: number;
   purchases: number;
   missingCostRowCount: number;
@@ -64,12 +65,6 @@ interface MonthDefinition {
   label: string;
   startDate: string;
   endDate: string;
-}
-
-interface CostPoint {
-  date: string;
-  cumulativeQuantity: number;
-  cumulativeValue: number;
 }
 
 const MONTH_NAMES = [
@@ -129,68 +124,12 @@ function transactionValue(row: NormalizedInventoryRecord): number {
     : 0;
 }
 
-function itemKey(row: NormalizedInventoryRecord): string | null {
-  const identifier = row.skuCode || row.itemCode || row.articleCode;
-  if (!identifier.trim()) return null;
-  return `${row.entityId}\u0000${row.branchId ?? ''}\u0000${identifier.trim().toLocaleUpperCase()}`;
-}
-
-function buildPurchaseCostIndex(purchases: readonly NormalizedInventoryRecord[]): Map<string, CostPoint[]> {
-  const grouped = new Map<string, NormalizedInventoryRecord[]>();
-  for (const purchase of purchases) {
-    const key = itemKey(purchase);
-    if (!key || !purchase.invoiceDate || purchase.quantity == null || purchase.quantity <= 0) continue;
-    const rows = grouped.get(key) ?? [];
-    rows.push(purchase);
-    grouped.set(key, rows);
-  }
-
-  const index = new Map<string, CostPoint[]>();
-  for (const [key, rows] of grouped) {
-    let cumulativeQuantity = 0;
-    let cumulativeValue = 0;
-    const points = [...rows]
-      .sort((left, right) => `${left.invoiceDate}|${left.transactionKey}`.localeCompare(`${right.invoiceDate}|${right.transactionKey}`))
-      .map((row) => {
-        cumulativeQuantity += row.quantity ?? 0;
-        cumulativeValue += transactionValue(row);
-        return { date: row.invoiceDate ?? '', cumulativeQuantity, cumulativeValue };
-      });
-    index.set(key, points);
-  }
-  return index;
-}
-
-function weightedAverageCost(
-  sale: NormalizedInventoryRecord,
-  purchaseCostIndex: ReadonlyMap<string, CostPoint[]>,
-): number | null {
-  const key = itemKey(sale);
-  if (!key || !sale.invoiceDate) return null;
-  const points = purchaseCostIndex.get(key);
-  if (!points?.length) return null;
-  let low = 0;
-  let high = points.length - 1;
-  let match = -1;
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2);
-    if (points[middle].date <= sale.invoiceDate) {
-      match = middle;
-      low = middle + 1;
-    } else {
-      high = middle - 1;
-    }
-  }
-  if (match < 0 || points[match].cumulativeQuantity <= 0) return null;
-  return points[match].cumulativeValue / points[match].cumulativeQuantity;
-}
-
 function emptyMutableRow(category: string): MutableCategoryRow {
   return {
     category,
     salesQty: 0,
     sales: 0,
-    salesCost: 0,
+    grossProfit: 0,
     purchaseQty: 0,
     purchases: 0,
     missingCostRowCount: 0,
@@ -218,7 +157,9 @@ export function calculateMonthlyCategoryReport(
 ): MonthlyCategoryReportResult {
   const monthDefinitions = financialMonths(startYear);
   const rowsByMonth = new Map(monthDefinitions.map((month) => [month.key, new Map<string, MutableCategoryRow>()]));
-  const purchaseCostIndex = buildPurchaseCostIndex(source.purchases);
+  const grossProfitIndex = new Map((source.grossProfitLines
+    ?? calculateGrossProfitLines(source.sales, source.purchases, source.openingStock))
+    .map((line) => [line.transactionKey, line]));
   let unmappedCategoryRecordCount = 0;
 
   const getRow = (record: NormalizedInventoryRecord): MutableCategoryRow | null => {
@@ -237,15 +178,14 @@ export function calculateMonthlyCategoryReport(
     if (!row) continue;
     const quantity = sale.quantity ?? 0;
     const salesValue = transactionValue(sale);
-    const explicitUnitCost = sale.purchasePrice != null && sale.purchasePrice > 0 ? sale.purchasePrice : null;
-    const unitCost = explicitUnitCost ?? weightedAverageCost(sale, purchaseCostIndex);
+    const grossProfitLine = grossProfitIndex.get(sale.transactionKey);
     row.salesQty += quantity;
     row.sales += salesValue;
-    if (unitCost == null) {
+    if (grossProfitLine?.cogsAmount == null) {
       row.missingCostRowCount += 1;
       row.missingCostSalesValue += salesValue;
     } else {
-      row.salesCost += quantity * unitCost;
+      row.grossProfit += grossProfitLine.grossProfitAmount ?? 0;
     }
   }
 
@@ -264,7 +204,7 @@ export function calculateMonthlyCategoryReport(
         sales: row.sales,
         purchaseQty: row.purchaseQty,
         purchases: row.purchases,
-        grossProfit: row.sales - row.salesCost,
+        grossProfit: row.grossProfit,
         missingCostRowCount: row.missingCostRowCount,
         missingCostSalesValue: row.missingCostSalesValue,
       }))

@@ -107,9 +107,42 @@ ol {
   outline: none;
 }
 
+/* Spreadsheet-style selection applied by the global table keyboard navigator. */
+table :is(th, td)[data-table-keyboard-selected='true'] {
+  outline: 1px solid color-mix(in srgb, var(--border-focus) 58%, transparent);
+  outline-offset: -1px;
+}
+
+table :is(th, td)[tabindex='-1']:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+  border-radius: 0;
+}
+
+table :is(th, td)[data-table-keyboard-copied='true'] {
+  outline-width: 2px !important;
+  outline-style: dashed !important;
+  outline-color: #2563eb;
+  outline-offset: -2px;
+  animation: table-keyboard-copy-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes table-keyboard-copy-pulse {
+  to { outline-color: #60a5fa; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  table :is(th, td)[data-table-keyboard-copied='true'] { animation: none; }
+}
+
 ::selection {
-  background-color: var(--accent-200);
-  color: var(--accent-900);
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #2563eb;
+  color: #ffffff;
 }
 
 /* Scrollbars styled to match the surface they sit on. */
@@ -132,65 +165,6 @@ ol {
   border: 3px solid transparent;
   border-radius: var(--radius-full);
   background-clip: content-box;
-}
-
-/* One branded hand cursor across the complete rendered application whenever any precise
- * pointing device is available. Mouse-down briefly uses the compact pressed-hand asset.
- */
-@media (any-hover: hover) and (any-pointer: fine) {
-  :root {
-    --custom-hand-cursor: url('/cursors/pointer-interactive.svg?v=hand-select-4') 13 2, none;
-    --custom-hand-cursor-pressed: url('/cursors/pointer-pressed.svg?v=hand-pressed-1') 12 2, none;
-  }
-
-  html,
-  body,
-  body *,
-  body *::before,
-  body *::after,
-  #root,
-  #root *,
-  #root *::before,
-  #root *::after,
-  dialog,
-  dialog *,
-  [popover],
-  [popover] *,
-  input::file-selector-button,
-  input::-webkit-file-upload-button,
-  input::-webkit-calendar-picker-indicator,
-  input::-webkit-search-cancel-button,
-  input::-webkit-search-decoration,
-  input::-webkit-inner-spin-button,
-  input::-webkit-outer-spin-button,
-  input::-webkit-credentials-auto-fill-button,
-  input::-webkit-contacts-auto-fill-button,
-  select,
-  option {
-    cursor: var(--custom-hand-cursor) !important;
-  }
-
-  html:active,
-  html:active *,
-  html:active *::before,
-  html:active *::after,
-  body:active,
-  body:active *,
-  body:active *::before,
-  body:active *::after,
-  body *:active,
-  body *:active::before,
-  body *:active::after,
-  #root:active,
-  #root *:active,
-  #root *:active::before,
-  #root *:active::after,
-  dialog:active,
-  dialog *:active,
-  [popover]:active,
-  [popover] *:active {
-    cursor: var(--custom-hand-cursor-pressed) !important;
-  }
 }
 
 /* Visible only to screen readers. */

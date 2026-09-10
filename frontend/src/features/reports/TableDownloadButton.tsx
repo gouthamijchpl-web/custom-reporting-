@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui';
+import { DownloadIcon } from '@/components/icons';
 import type { CellObject, SheetData } from 'write-excel-file/browser';
+import './TableDownloadButton.css';
 
 interface TableDownloadButtonProps {
   tableId: string;
@@ -85,11 +87,11 @@ function workbookData(table: HTMLTableElement): {
       }
       const renderedStyle = getComputedStyle(cell);
       const fallbackBackground = groupedHeader
-        ? cell.cellIndex === 0 ? '#5C9F0B' : '#162013'
-        : header ? '#E7F0DC' : footer ? '#F2F6ED' : undefined;
+        ? cell.cellIndex === 0 ? '#2563EB' : '#315FBD'
+        : header ? '#EFF6FF' : footer ? '#EAF2FF' : undefined;
       const backgroundColor = renderedBackground(cell) ?? fallbackBackground;
-      const textColor = excelColor(renderedStyle.color) ?? (groupedHeader ? '#FFFFFF' : header ? '#24351B' : undefined);
-      const borderColor = excelColor(renderedStyle.borderBottomColor) ?? '#D5E0CB';
+      const textColor = excelColor(renderedStyle.color) ?? (groupedHeader ? '#FFFFFF' : header ? '#334155' : undefined);
+      const borderColor = excelColor(renderedStyle.borderBottomColor) ?? '#D6E4F5';
       const renderedAlignment = ['left', 'center', 'right'].includes(renderedStyle.textAlign)
         ? renderedStyle.textAlign as 'left' | 'center' | 'right'
         : header ? 'center' : cell.cellIndex === 0 ? 'left' : 'right';
@@ -135,5 +137,5 @@ export function TableDownloadButton({ tableId, fileName }: TableDownloadButtonPr
     }).toFile(`${xlsxFileName}.xlsx`);
   };
 
-  return <Button type="button" variant="secondary" size="sm" onClick={() => { void download(); }}>Download Excel</Button>;
+  return <Button type="button" variant="secondary" size="sm" className="table-download-button" leadingIcon={<DownloadIcon size={16} />} onClick={() => { void download(); }}>Download Excel</Button>;
 }

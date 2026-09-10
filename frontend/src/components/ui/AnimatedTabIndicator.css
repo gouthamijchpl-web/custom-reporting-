@@ -1,0 +1,43 @@
+.animated-tab-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--animated-tab-width, 0);
+  height: var(--animated-tab-height, 0);
+  pointer-events: none;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, .11);
+  opacity: 0;
+  transform: translate3d(var(--animated-tab-left, 0), var(--animated-tab-top, 0), 0);
+  transition:
+    width 320ms cubic-bezier(.22, 1, .36, 1),
+    height 320ms cubic-bezier(.22, 1, .36, 1),
+    opacity 160ms ease-in-out,
+    transform 320ms cubic-bezier(.22, 1, .36, 1);
+  will-change: width, height, transform;
+}
+
+.animated-tab-indicator[data-ready='true'] {
+  opacity: 1;
+}
+
+.animated-tab-indicator::after {
+  position: absolute;
+  bottom: 3px;
+  left: 18%;
+  width: 64%;
+  height: 3px;
+  content: '';
+  background: var(--accent-solid);
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 3px rgba(249, 115, 22, .24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-tab-indicator {
+    transition: none;
+  }
+}
