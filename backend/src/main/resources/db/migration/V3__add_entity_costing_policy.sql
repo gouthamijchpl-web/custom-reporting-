@@ -1,4 +1,7 @@
-create table entity_costing_policy_revisions (
+-- Local development can point at the same Supabase schema and may have already
+-- created this table through Hibernate's ddl-auto=update. Keep the migration
+-- idempotent so Flyway can adopt that schema without dropping existing data.
+create table if not exists entity_costing_policy_revisions (
     id uuid primary key,
     entity_id uuid not null,
     costing_method varchar(32) not null,
@@ -9,6 +12,5 @@ create table entity_costing_policy_revisions (
     constraint ck_costing_policy_method check (costing_method in ('FIFO', 'MOVING_WEIGHTED_AVERAGE'))
 );
 
-create index ix_costing_policy_entity_effective
+create index if not exists ix_costing_policy_entity_effective
     on entity_costing_policy_revisions (entity_id, effective_from);
-
