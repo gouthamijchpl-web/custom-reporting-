@@ -14,16 +14,6 @@ interface AuthLayoutProps {
 
 const HIGHLIGHTS = [
   {
-    icon: <LayersIcon size={18} />,
-    title: 'Unified data',
-    description: 'Bring your reporting data together in one place.',
-  },
-  {
-    icon: <SlidersIcon size={18} />,
-    title: 'Flexible reporting',
-    description: 'Configure formats, periods and reporting preferences.',
-  },
-  {
     icon: <ShieldIcon size={18} />,
     title: 'Secure access',
     description: 'Protected credentials, controlled access and secure sessions.',
