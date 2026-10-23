@@ -15,6 +15,8 @@ interface ForgotPasswordFormValues extends Record<string, unknown> {
   confirmPassword: string;
 }
 
+const GENERIC_FAILURE = 'Unable to create the password. Check the information and try again.';
+
 function validate(values: ForgotPasswordFormValues): FormErrors<ForgotPasswordFormValues> {
   const passwordPolicyError = validateNewPassword(values.password);
   return {
@@ -46,8 +48,11 @@ export function ForgotPasswordPage() {
       });
       setIsComplete(true);
     } catch (error) {
-      if (error instanceof ApiError && error.status > 0 && error.status < 500) {
+      if (error instanceof ApiError && error.isValidationError) {
         throw error;
+      }
+      if (error instanceof ApiError && error.status > 0 && error.status < 500) {
+        throw new ApiError(error.status, error.code, GENERIC_FAILURE);
       }
       throw new ApiError(500, 'INTERNAL_ERROR', 'Something went wrong. Please try again.');
     }

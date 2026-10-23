@@ -77,13 +77,6 @@ class DetailedAuthenticationErrorsTest {
                     .content(objectMapper.writeValueAsString(
                             Map.of("email", email, "password", password, "rememberMe", false)));
         }
-
-        protected MockHttpServletRequestBuilder createPassword(String email) throws Exception {
-            return post("/api/v1/auth/forgot-password")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(Map.of(
-                            "email", email, "password", PASSWORD, "confirmPassword", PASSWORD)));
-        }
     }
 
     @Nested
@@ -150,15 +143,6 @@ class DetailedAuthenticationErrorsTest {
         @DisplayName("the address is matched regardless of casing or surrounding spaces")
         void emailMatchingIsForgiving() throws Exception {
             mockMvc.perform(login("  WorkFlow@Example.COM  ", PASSWORD)).andExpect(status().isOk());
-        }
-
-        @Test
-        @DisplayName("password creation explains a missing local account")
-        void missingResetAccountIsExplained() throws Exception {
-            mockMvc.perform(createPassword("missing@example.com"))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.message").value(
-                            "No account exists for this email in the local application. Check the address or sign up first."));
         }
     }
 }

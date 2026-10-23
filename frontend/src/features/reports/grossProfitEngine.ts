@@ -1,7 +1,7 @@
 import type { CostingPolicy, CostingPolicyRevision, InventoryCostingMethod } from '@/types';
 import type { NormalizedInventoryRecord } from '@/features/uploads/inventoryImport';
 
-export type GrossProfitCostStatus = 'COSTED' | 'ESTIMATED' | 'UNCOSTED';
+export type GrossProfitCostStatus = 'COSTED' | 'UNCOSTED';
 
 export interface GrossProfitLine {
   transactionKey: string;
@@ -32,7 +32,6 @@ export interface GrossProfitLine {
 interface CostLot {
   quantity: number;
   unitCost: number | null;
-  estimated: boolean;
 }
 
 type CostAllocation = CostLot;
@@ -42,7 +41,6 @@ interface InventoryState {
   deficitQuantity: number;
   saleHistory: CostAllocation[][];
   method: InventoryCostingMethod;
-  lastKnownUnitCost: number | null;
 }
 
 const DEFAULT_POLICY: CostingPolicy = {
@@ -69,6 +67,7 @@ function unitPurchaseCost(row: NormalizedInventoryRecord): number | null {
 }
 
 function itemKey(row: NormalizedInventoryRecord): string | null {
+  if (row.inventoryKey) return `${row.entityId}|${row.branchId ?? ''}|${row.inventoryKey}`;
   const identifier = row.skuCode || row.articleCode || row.itemCode;
   return identifier ? `${row.entityId}|${row.branchId ?? ''}|${identifier.trim().toLocaleUpperCase()}|${row.uom}` : null;
 }
@@ -102,9 +101,8 @@ function collapseToWeightedAverage(state: InventoryState): void {
     return;
   }
   const hasUnknownCost = state.lots.some((lot) => lot.unitCost == null);
-  const hasEstimatedCost = state.lots.some((lot) => lot.estimated);
   const value = state.lots.reduce((total, lot) => total + lot.quantity * (lot.unitCost ?? 0), 0);
-  state.lots = [{ quantity, unitCost: hasUnknownCost ? null : value / quantity, estimated: hasEstimatedCost }];
+  state.lots = [{ quantity, unitCost: hasUnknownCost ? null : value / quantity }];
 }
 
 function setMethod(state: InventoryState, method: InventoryCostingMethod): void {
@@ -113,7 +111,7 @@ function setMethod(state: InventoryState, method: InventoryCostingMethod): void 
   state.method = method;
 }
 
-function addInventory(state: InventoryState, quantity: number, unitCost: number | null, estimated = false): number {
+function addInventory(state: InventoryState, quantity: number, unitCost: number | null): number {
   let remaining = quantity;
   if (state.deficitQuantity > 0) {
     const covered = Math.min(state.deficitQuantity, remaining);
@@ -124,17 +122,15 @@ function addInventory(state: InventoryState, quantity: number, unitCost: number 
   if (state.method === 'MOVING_WEIGHTED_AVERAGE') {
     const currentQuantity = totalQuantity(state);
     const currentHasUnknownCost = state.lots.some((lot) => lot.unitCost == null);
-    const currentHasEstimatedCost = state.lots.some((lot) => lot.estimated);
     const currentValue = state.lots.reduce((total, lot) => total + lot.quantity * (lot.unitCost ?? 0), 0);
     state.lots = [{
       quantity: currentQuantity + remaining,
       unitCost: currentHasUnknownCost || unitCost == null
         ? null
         : (currentValue + remaining * unitCost) / (currentQuantity + remaining),
-      estimated: currentHasEstimatedCost || estimated,
     }];
   } else {
-    state.lots.push({ quantity: remaining, unitCost, estimated });
+    state.lots.push({ quantity: remaining, unitCost });
   }
   return remaining;
 }
@@ -146,26 +142,19 @@ function removeInventory(state: InventoryState, quantity: number, newestFirst: b
     const index = newestFirst ? state.lots.length - 1 : 0;
     const lot = state.lots[index];
     const taken = Math.min(lot.quantity, remaining);
-    allocations.push({ quantity: taken, unitCost: lot.unitCost, estimated: lot.estimated });
+    allocations.push({ quantity: taken, unitCost: lot.unitCost });
     lot.quantity -= taken;
     remaining -= taken;
     if (lot.quantity <= 0.0000001) state.lots.splice(index, 1);
   }
   if (remaining > 0.0000001) {
     state.deficitQuantity += remaining;
-    allocations.push({ quantity: remaining, unitCost: null, estimated: false });
+    allocations.push({ quantity: remaining, unitCost: null });
   }
   return allocations;
 }
 
-function estimateMissingAllocations(allocations: CostAllocation[], fallbackCost: number | null): CostAllocation[] {
-  if (fallbackCost == null) return allocations;
-  return allocations.map((allocation) => allocation.unitCost == null
-    ? { ...allocation, unitCost: fallbackCost, estimated: true }
-    : allocation);
-}
-
-function restoreSaleReturn(state: InventoryState, returnQuantity: number, fallbackCost: number | null): CostAllocation[] {
+function restoreSaleReturn(state: InventoryState, returnQuantity: number): CostAllocation[] {
   let remaining = returnQuantity;
   const restored: CostAllocation[] = [];
   while (remaining > 0.0000001 && state.saleHistory.length > 0) {
@@ -173,23 +162,16 @@ function restoreSaleReturn(state: InventoryState, returnQuantity: number, fallba
     while (remaining > 0.0000001 && previousSale.length > 0) {
       const allocation = previousSale[previousSale.length - 1];
       const restoredQuantity = Math.min(allocation.quantity, remaining);
-      restored.push({ quantity: restoredQuantity, unitCost: allocation.unitCost, estimated: allocation.estimated });
+      restored.push({ quantity: restoredQuantity, unitCost: allocation.unitCost });
       allocation.quantity -= restoredQuantity;
       remaining -= restoredQuantity;
       if (allocation.quantity <= 0.0000001) previousSale.pop();
     }
     if (previousSale.length === 0) state.saleHistory.pop();
   }
-  if (remaining > 0.0000001) {
-    // Without the original sale, use the cost of stock available on the return date.
-    // Keep the result uncosted when that stock has no reliable purchase cost.
-    const currentLot = state.method === 'FIFO' ? state.lots.at(-1) : state.lots[0];
-    const unitCost = state.deficitQuantity > 0 ? null : currentLot?.unitCost ?? null;
-    restored.push({ quantity: remaining, unitCost, estimated: unitCost != null });
-  }
-  const allocations = estimateMissingAllocations(restored, fallbackCost);
-  for (const allocation of allocations) addInventory(state, allocation.quantity, allocation.unitCost, allocation.estimated);
-  return allocations;
+  if (remaining > 0.0000001) restored.push({ quantity: remaining, unitCost: null });
+  for (const allocation of restored) addInventory(state, allocation.quantity, allocation.unitCost);
+  return restored;
 }
 
 function allocationValue(allocations: readonly CostAllocation[]): number | null {
@@ -209,15 +191,14 @@ function validRows(rows: readonly NormalizedInventoryRecord[]): NormalizedInvent
 
 /**
  * Canonical invoice-line GP calculation used by both the Data Upload GP tab and reports.
- * By default, cost comes only from opening stock and purchase history. The Data Upload
- * GP view can explicitly opt into provisional estimates when that history is incomplete.
+ * Sales-upload purchase-price fields are deliberately ignored: cost always comes from
+ * opening stock and purchase history under the entity's configured method.
  */
 export function calculateGrossProfitLines(
   sales: readonly NormalizedInventoryRecord[],
   purchases: readonly NormalizedInventoryRecord[],
   openingStock: readonly NormalizedInventoryRecord[],
   policy?: CostingPolicy,
-  options: { estimateMissingCost?: boolean } = {},
 ): GrossProfitLine[] {
   const revisions = revisionsFor(policy);
   const events = validRows([...openingStock, ...purchases, ...sales]).sort((left, right) => {
@@ -232,30 +213,25 @@ export function calculateGrossProfitLines(
     const key = itemKey(row);
     if (!key || !row.invoiceDate || row.quantity == null) continue;
     const method = methodAt(revisions, row.invoiceDate);
-    const state = states.get(key) ?? { lots: [], deficitQuantity: 0, saleHistory: [], method, lastKnownUnitCost: null };
+    const state = states.get(key) ?? { lots: [], deficitQuantity: 0, saleHistory: [], method };
     setMethod(state, method);
     states.set(key, state);
 
     if (row.transactionType === 'opening-stock' || row.transactionType === 'purchases') {
       const cost = unitPurchaseCost(row);
-      if (row.quantity > 0) {
-        addInventory(state, row.quantity, cost);
-        if (cost != null && cost > 0) state.lastKnownUnitCost = cost;
-      }
+      if (row.quantity > 0) addInventory(state, row.quantity, cost);
       else if (row.quantity < 0) removeInventory(state, Math.abs(row.quantity), true);
       continue;
     }
 
     const quantity = row.quantity;
     const salesValue = transactionValue(row);
-    const salesPurchasePrice = finite(row.purchasePrice) && row.purchasePrice !== 0 ? Math.abs(row.purchasePrice) : null;
-    const fallbackCost = options.estimateMissingCost ? state.lastKnownUnitCost ?? salesPurchasePrice : null;
     let allocations: CostAllocation[];
     if (quantity >= 0) {
-      allocations = estimateMissingAllocations(removeInventory(state, quantity, false), fallbackCost);
+      allocations = removeInventory(state, quantity, false);
       state.saleHistory.push(allocations.map((allocation) => ({ ...allocation })));
     } else {
-      allocations = restoreSaleReturn(state, Math.abs(quantity), fallbackCost);
+      allocations = restoreSaleReturn(state, Math.abs(quantity));
     }
     const allocatedValue = allocationValue(allocations);
     const cogsAmount = allocatedValue == null ? null : allocatedValue * (quantity < 0 ? -1 : 1);
@@ -283,7 +259,7 @@ export function calculateGrossProfitLines(
       grossProfitAmount,
       grossProfitPercent,
       costingMethod: method,
-      costStatus: cogsAmount == null ? 'UNCOSTED' : allocations.some((allocation) => allocation.estimated) ? 'ESTIMATED' : 'COSTED',
+      costStatus: cogsAmount == null ? 'UNCOSTED' : 'COSTED',
       uncostedQuantity: allocations.reduce((total, allocation) => total + (allocation.unitCost == null ? allocation.quantity : 0), 0),
       sourceFile: row.sourceFile,
       sourceRow: row.sourceRow,

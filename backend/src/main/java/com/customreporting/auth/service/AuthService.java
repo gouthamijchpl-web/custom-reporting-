@@ -279,22 +279,16 @@ public class AuthService {
         if (!passwordResetRateLimiter.tryAcquire(recoveryKey)) {
             log.warn("Blocked repeated password creation attempts for recovery key {}",
                     recoveryKey.substring(0, 12));
-            throw passwordCreationFailed("Please wait before trying to create a password again.");
+            throw passwordCreationFailed();
         }
 
         Optional<User> found = userRepository.findByEmail(email);
-        if (found.isEmpty() || !found.get().hasApplicationAccess()) {
+        if (found.isEmpty() || !found.get().isEnabled()) {
             // Keep failure timing closer to the successful path without storing anything.
             passwordEncoder.encode(request.password());
             log.warn("Rejected password creation for an unknown or inactive recovery key {}",
                     recoveryKey.substring(0, 12));
-            if (found.isEmpty()) {
-                throw passwordCreationFailed("No account exists for this email in the local application. Check the address or sign up first.");
-            }
-            if (!found.get().hasPassword()) {
-                throw passwordCreationFailed("This account has not been registered yet. Use Sign Up to create its first password.");
-            }
-            throw passwordCreationFailed("This account is not active. Ask an administrator to enable access.");
+            throw passwordCreationFailed();
         }
 
         User user = found.get();
@@ -304,8 +298,8 @@ public class AuthService {
         log.info("In-application password creation completed for account {}", user.getId());
     }
 
-    private BusinessRuleException passwordCreationFailed(String localDevelopmentMessage) {
-        return new BusinessRuleException(detailedErrors ? localDevelopmentMessage : GENERIC_PASSWORD_CREATION_MESSAGE);
+    private BusinessRuleException passwordCreationFailed() {
+        return new BusinessRuleException(GENERIC_PASSWORD_CREATION_MESSAGE);
     }
 
     /** Stores a new password hash and invalidates access tokens issued before the change. */

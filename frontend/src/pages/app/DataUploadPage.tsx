@@ -11,7 +11,6 @@ import { invalidateDailySalesCategorySource } from '@/features/reports/dailySale
 import { GrossProfitTable } from '@/features/uploads/GrossProfitTable';
 import { useBranches, useCloudPreference, useEntities } from '@/hooks';
 import { cx } from '@/utils/classNames';
-import type { CellObject, SheetData } from 'write-excel-file/browser';
 import './DataUploadPage.css';
 
 type UploadType = ImportKind;
@@ -134,34 +133,6 @@ async function saveEntityUploads(scopeId: string, entityId: string, branchId: st
 function getUploadType(id: UploadType) { return UPLOAD_TYPES.find((type) => type.id === id) ?? UPLOAD_TYPES[0]; }
 function formatFileSize(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`; }
 function formatCell(value: unknown) { if (value == null) return ''; if (value instanceof Date) return new Intl.DateTimeFormat().format(value); return String(value); }
-function exportCell(value: unknown): CellObject {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return { value, type: Date, format: 'yyyy-mm-dd' };
-  if (typeof value === 'number' && Number.isFinite(value)) return { value, type: Number };
-  if (typeof value === 'boolean') return { value, type: Boolean };
-  return { value: value == null ? '' : String(value), type: String };
-}
-async function downloadUploadedFile(file: ImportedInventoryFile): Promise<void> {
-  const rows = [file.headers, ...file.rawRows];
-  const baseName = file.fileName.replace(/\.(csv|xlsx)$/i, '');
-  if (file.fileName.toLowerCase().endsWith('.csv')) {
-    const csv = rows.map((row) => row.map((value) => {
-      const text = value == null ? '' : value instanceof Date ? value.toISOString() : String(value);
-      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    }).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url; link.download = `${baseName}-uploaded-data.csv`;
-    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
-    return;
-  }
-  const data: SheetData = rows.map((row, index) => row.map((value) => ({
-    ...exportCell(value),
-    ...(index === 0 ? { fontWeight: 'bold' as const } : {}),
-  })));
-  const { default: writeExcelFile } = await import('write-excel-file/browser');
-  await writeExcelFile(data, { sheet: file.sourceSheet || 'Uploaded data', showGridLines: true, stickyRowsCount: 1 })
-    .toFile(`${baseName}-uploaded-data.xlsx`);
-}
 function importedColumnClass(header: string) {
   return /description|particular|notes|address|customer|buyer|vendor|supplier|entity|company/i.test(header)
     ? 'upload-preview__text-column'
@@ -362,10 +333,6 @@ export function DataUploadPage() {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => { void acceptFiles(Array.from(event.target.files ?? [])); event.target.value = ''; };
   const handleDrop = (event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setDragging(false); setReplaceUploadId(null); void acceptFiles(Array.from(event.dataTransfer.files)); };
   const startReplace = (uploadId: string) => { setReplaceUploadId(uploadId); fileInputRef.current?.click(); };
-  const handleDownload = (file: ImportedInventoryFile) => {
-    setFileError(null);
-    void downloadUploadedFile(file).catch(() => setFileError(`Could not download ${file.fileName}. Please try again.`));
-  };
   const downloadTemplate = () => {
     if (type.templateUrl) { const link = document.createElement('a'); link.href = type.templateUrl; link.download = type.templateFileName ?? `${type.id}-template.xlsx`; document.body.appendChild(link); link.click(); link.remove(); return; }
     const url = URL.createObjectURL(new Blob([`${(type.templateColumns ?? []).join(',')}\n`], { type: 'text/csv;charset=utf-8' }));
@@ -391,7 +358,7 @@ export function DataUploadPage() {
           <input ref={fileInputRef} type="file" className="sr-only" accept=".csv,.xlsx" multiple onChange={handleFileChange} aria-label={`Choose ${type.label} files`} /><span className="file-dropzone__icon"><UploadIcon size={24} /></span><strong>Drop your files here</strong><span>or choose files from your computer</span><Button variant="secondary" size="sm" onClick={() => { setReplaceUploadId(null); fileInputRef.current?.click(); }}>Choose files</Button>
         </div>
         {fileError && <p className="file-dropzone__error" role="alert">{fileError}</p>}{importLoading && <div className="upload-preview__loading" role="status">Reading worksheets and detecting columns…</div>}
-        {activeUploads.length > 0 && <section className="uploaded-file-list" aria-labelledby="uploaded-file-list-title"><header className="uploaded-file-list__header"><h3 id="uploaded-file-list-title">Uploaded files</h3><Badge tone="success" withDot>{activeUploads.length} uploaded</Badge></header><ul>{activeUploads.map((file) => <li key={file.id}><span className="uploaded-file-list__icon" aria-hidden="true"><UploadIcon size={17} /></span><span className="uploaded-file-list__details"><strong>{file.fileName}</strong><small>{formatFileSize(file.fileSize)} · {file.sourceSheet} · {file.rawRows.length} rows</small><span className="uploaded-file-list__statuses"><Badge tone={statusTone(file.duplicateStatus)}>{file.duplicateStatus}</Badge></span></span><span className="uploaded-file-list__actions"><Button variant="ghost" size="sm" onClick={() => handleDownload(file)}>Download</Button><Button variant="ghost" size="sm" onClick={() => startReplace(file.id)}>Replace</Button><Button variant="ghost" size="sm" className="uploaded-file-list__remove" onClick={() => removeUpload(activeType, file.id)}>Remove</Button></span></li>)}</ul></section>}
+        {activeUploads.length > 0 && <section className="uploaded-file-list" aria-labelledby="uploaded-file-list-title"><header className="uploaded-file-list__header"><h3 id="uploaded-file-list-title">Uploaded files</h3><Badge tone="success" withDot>{activeUploads.length} uploaded</Badge></header><ul>{activeUploads.map((file) => <li key={file.id}><span className="uploaded-file-list__icon" aria-hidden="true"><UploadIcon size={17} /></span><span className="uploaded-file-list__details"><strong>{file.fileName}</strong><small>{formatFileSize(file.fileSize)} · {file.sourceSheet} · {file.rawRows.length} rows</small><span className="uploaded-file-list__statuses"><Badge tone={statusTone(file.duplicateStatus)}>{file.duplicateStatus}</Badge></span></span><span className="uploaded-file-list__actions"><Button variant="ghost" size="sm" onClick={() => startReplace(file.id)}>Replace</Button><Button variant="ghost" size="sm" className="uploaded-file-list__remove" onClick={() => removeUpload(activeType, file.id)}>Remove</Button></span></li>)}</ul></section>}
         <p className="upload-workflow-panel__entity">Active client: <strong>{selectedEntity?.name ?? 'No client selected'}</strong>{selectedBranch && <> · Branch: <strong>{selectedBranch.name}</strong></>}</p>
       </div></div>
     </Modal>

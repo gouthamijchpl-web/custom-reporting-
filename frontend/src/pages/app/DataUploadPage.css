@@ -93,7 +93,6 @@
 .gross-profit-summary__warning { border-top-color: var(--warning-solid) !important; }
 .gross-profit-table th, .gross-profit-table td { text-align: right; }
 .gross-profit-table th:nth-child(-n+8), .gross-profit-table td:nth-child(-n+8), .gross-profit-table th:nth-child(10), .gross-profit-table td:nth-child(10), .gross-profit-table th:nth-child(n+16), .gross-profit-table td:nth-child(n+16) { text-align: left; }
-.gross-profit-table th:nth-child(3), .gross-profit-table td:nth-child(3) { width: 220px; min-width: 220px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }
 .gross-profit-table td:nth-child(6) { min-width: 220px; }
 
 .uploaded-file-list { margin-top: var(--space-4); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
