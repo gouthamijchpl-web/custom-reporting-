@@ -5,7 +5,8 @@ import { Alert, Badge, TextInput } from '@/components/ui';
 import { TableDownloadButton } from '@/features/reports/TableDownloadButton';
 import { calculateGrossProfitLines } from '@/features/reports/grossProfitEngine';
 import type { CostingPolicy } from '@/types';
-import type { ImportedInventoryFile, ImportKind } from './inventoryImport';
+import { normalizeHeader } from './inventoryImport';
+import type { ImportedInventoryFile, ImportKind, NormalizedInventoryRecord } from './inventoryImport';
 
 type UploadsByType = Partial<Record<ImportKind, ImportedInventoryFile[]>>;
 
@@ -15,6 +16,14 @@ const percentage = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, ma
 
 function methodLabel(value: 'FIFO' | 'MOVING_WEIGHTED_AVERAGE'): string {
   return value === 'FIFO' ? 'FIFO' : 'Moving average';
+}
+
+function withVoucherNumber(row: NormalizedInventoryRecord): NormalizedInventoryRecord {
+  const voucher = Object.entries(row.rawRow).find(([header]) => [
+    'voucher number', 'voucher no', 'sales voucher number', 'sales voucher no',
+  ].includes(normalizeHeader(header)))?.[1];
+  const voucherNumber = voucher == null ? '' : String(voucher).trim();
+  return voucherNumber ? { ...row, invoiceNumber: voucherNumber } : row;
 }
 
 export function GrossProfitTable({ entityId, uploadsByType }: { entityId: string; uploadsByType: UploadsByType }) {
@@ -34,10 +43,11 @@ export function GrossProfitTable({ entityId, uploadsByType }: { entityId: string
   }, [entityId]);
 
   const rows = useMemo(() => policy ? calculateGrossProfitLines(
-    (uploadsByType.sales ?? []).flatMap((file) => file.normalizedRows),
+    (uploadsByType.sales ?? []).flatMap((file) => file.normalizedRows.map(withVoucherNumber)),
     (uploadsByType.purchases ?? []).flatMap((file) => file.normalizedRows),
     (uploadsByType['opening-stock'] ?? []).flatMap((file) => file.normalizedRows),
     policy,
+    { estimateMissingCost: true },
   ) : [], [policy, uploadsByType]);
   const visibleRows = useMemo(() => rows.filter((row) => !deferredQuery || [
     row.invoiceDate, row.invoiceNumber, row.lineNumber, row.itemCode, row.skuCode,
@@ -48,7 +58,8 @@ export function GrossProfitTable({ entityId, uploadsByType }: { entityId: string
     cogs: result.cogs + (row.cogsAmount ?? 0),
     gp: result.gp + (row.grossProfitAmount ?? 0),
     uncosted: result.uncosted + (row.costStatus === 'UNCOSTED' ? 1 : 0),
-  }), { salesValue: 0, cogs: 0, gp: 0, uncosted: 0 }), [rows]);
+    estimated: result.estimated + (row.costStatus === 'ESTIMATED' ? 1 : 0),
+  }), { salesValue: 0, cogs: 0, gp: 0, uncosted: 0, estimated: 0 }), [rows]);
 
   if (error) return <div className="gross-profit-view"><Alert variant="danger">{error}</Alert></div>;
   if (!policy) return <div className="data-upload-result__empty" role="status">Calculating invoice-item gross profit…</div>;
@@ -61,12 +72,13 @@ export function GrossProfitTable({ entityId, uploadsByType }: { entityId: string
       <div><span>Gross Profit</span><strong>{currency.format(totals.gp)}</strong></div>
       <div className={totals.uncosted ? 'gross-profit-summary__warning' : ''}><span>Uncosted Lines</span><strong>{number.format(totals.uncosted)}</strong></div>
     </div>
+    {totals.estimated > 0 && <Alert variant="info">{totals.estimated} {totals.estimated === 1 ? 'line uses' : 'lines use'} estimated cost. COGS and gross profit totals include these provisional amounts. Where recorded stock runs out, the estimate uses the latest earlier purchase or opening-stock cost, then the Sales Purchase Price if no earlier cost exists. Returns may also carry an estimated cost from an earlier sale.</Alert>}
     <div className="upload-preview">
       <header className="upload-preview__header"><div><h3>Gross Profit</h3><p>Invoice-item GP using {methodLabel(policy.currentMethod)} for this branch.</p></div><div className="upload-preview__badges"><Badge tone="accent">{methodLabel(policy.currentMethod)}</Badge><Badge tone="neutral">{visibleRows.length} of {rows.length}</Badge></div></header>
       <div className="upload-preview__search"><TextInput id="gross-profit-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search invoice or item" aria-label="Search gross profit lines" /><TableDownloadButton tableId="gross-profit-table" fileName="gross-profit-invoice-items.xlsx" /></div>
       <div className="upload-preview__table-wrap"><table id="gross-profit-table" className="upload-preview__table gross-profit-table">
         <thead><tr><th className="upload-preview__row-number">#</th><th>Invoice Date</th><th>Invoice Number</th><th>Line</th><th>SKU / Item</th><th>Description</th><th>Category</th><th>Style</th><th>Qty</th><th>UOM</th><th>Sales Value</th><th>Unit Cost</th><th>COGS</th><th>GP Amount</th><th>GP %</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody>{visibleRows.map((row, index) => <tr key={row.transactionKey}><th className="upload-preview__row-number" scope="row">{index + 1}</th><td>{row.invoiceDate}</td><td>{row.invoiceNumber || '—'}</td><td>{row.lineNumber}</td><td>{row.skuCode || row.itemCode || row.articleCode || '—'}</td><td>{row.description || '—'}</td><td>{row.finalProductType || row.productCategory || '—'}</td><td>{row.style || '—'}</td><td>{number.format(row.quantity)}</td><td>{row.uom || '—'}</td><td>{currency.format(row.salesValue)}</td><td>{row.unitCost == null ? '—' : currency.format(row.unitCost)}</td><td>{row.cogsAmount == null ? '—' : currency.format(row.cogsAmount)}</td><td>{row.grossProfitAmount == null ? '—' : currency.format(row.grossProfitAmount)}</td><td>{row.grossProfitPercent == null ? '—' : `${percentage.format(row.grossProfitPercent)}%`}</td><td>{methodLabel(row.costingMethod)}</td><td><Badge tone={row.costStatus === 'COSTED' ? 'success' : 'warning'}>{row.costStatus === 'COSTED' ? 'Costed' : 'Uncosted'}</Badge></td></tr>)}</tbody>
+        <tbody>{visibleRows.map((row, index) => <tr key={row.transactionKey}><th className="upload-preview__row-number" scope="row">{index + 1}</th><td>{row.invoiceDate}</td><td>{row.invoiceNumber || '—'}</td><td>{row.lineNumber}</td><td>{row.skuCode || row.itemCode || row.articleCode || '—'}</td><td>{row.description || '—'}</td><td>{row.finalProductType || row.productCategory || '—'}</td><td>{row.style || '—'}</td><td>{number.format(row.quantity)}</td><td>{row.uom || '—'}</td><td>{currency.format(row.salesValue)}</td><td>{row.unitCost == null ? '—' : currency.format(row.unitCost)}</td><td>{row.cogsAmount == null ? '—' : currency.format(row.cogsAmount)}</td><td>{row.grossProfitAmount == null ? '—' : currency.format(row.grossProfitAmount)}</td><td>{row.grossProfitPercent == null ? '—' : `${percentage.format(row.grossProfitPercent)}%`}</td><td>{methodLabel(row.costingMethod)}</td><td><Badge tone={row.costStatus === 'COSTED' ? 'success' : 'warning'}>{row.costStatus === 'COSTED' ? 'Costed' : row.costStatus === 'ESTIMATED' ? 'Estimated' : 'Uncosted'}</Badge></td></tr>)}</tbody>
       </table></div>
     </div>
   </section>;

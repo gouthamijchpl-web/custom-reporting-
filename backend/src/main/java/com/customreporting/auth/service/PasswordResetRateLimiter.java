@@ -31,7 +31,10 @@ public class PasswordResetRateLimiter {
     }
 
     public synchronized boolean tryAcquire(String key) {
-        Instant now = Instant.now();
+        return tryAcquire(key, Instant.now());
+    }
+
+    synchronized boolean tryAcquire(String key, Instant now) {
         AttemptBucket current = buckets.get(key);
 
         if (current == null || !now.isBefore(current.windowStartedAt().plus(attemptWindow))) {
@@ -43,14 +46,12 @@ public class PasswordResetRateLimiter {
             return true;
         }
 
-        int nextCount = Math.min(maxAttempts, current.attemptCount() + 1);
         if (current.attemptCount() >= maxAttempts
                 || now.isBefore(current.lastAttemptAt().plus(cooldown))) {
-            buckets.put(key, new AttemptBucket(current.windowStartedAt(), now, nextCount));
             return false;
         }
 
-        buckets.put(key, new AttemptBucket(current.windowStartedAt(), now, nextCount));
+        buckets.put(key, new AttemptBucket(current.windowStartedAt(), now, current.attemptCount() + 1));
         return true;
     }
 

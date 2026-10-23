@@ -1,16 +1,9 @@
 spring:
   datasource:
-    url: ${SUPABASE_DB_URL}
-    username: ${SUPABASE_DB_USERNAME}
-    password: ${SUPABASE_DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      # Local development shares the same constrained Supabase session pool as Render.
-      maximum-pool-size: ${DB_POOL_MAX_SIZE:3}
-      minimum-idle: ${DB_POOL_MIN_IDLE:0}
-      connection-timeout: 30000
-      idle-timeout: 300000
-      max-lifetime: 1200000
+    url: jdbc:h2:file:./data/customreporting
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
 
   jpa:
     hibernate:
@@ -24,6 +17,8 @@ server:
   port: 8080
 
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://192.168.10.56:5173}
   security:
     detailed-authentication-errors: true
 
