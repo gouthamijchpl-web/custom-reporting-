@@ -94,22 +94,26 @@ Local settings remain separate from production:
 
 ```text
 Frontend: http://localhost:5173 -> /api Vite proxy
-Backend:  http://localhost:8080 -> Supabase PostgreSQL
+Backend:  http://localhost:8080 -> file-backed H2
 ```
 
-In the backend terminal, set `SUPABASE_DB_URL`, `SUPABASE_DB_USERNAME`, and
-`SUPABASE_DB_PASSWORD`, then run. Local development also defaults to a three-connection
-pool so it cannot starve the Render deployment of Supabase session-pool connections:
+Copy the shared environment template once. The ignored repository-root `.env` is read by
+both Spring Boot and Vite and contains local database, backend, and frontend settings:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then start the backend:
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-If local secrets are stored in the ignored `backend/config/application.yml`, that YAML
-document must include `spring.config.activate.on-profile: dev`. Maven test execution also
-forces the datasource to an in-memory H2 database so an external PostgreSQL/Supabase
-configuration can never be modified by integration-test schema setup or cleanup.
+Maven test execution forces the datasource to a separate in-memory H2 database, so a
+configured PostgreSQL/Supabase database can never be modified by integration-test schema
+setup or cleanup.
 
 In a second terminal:
 
@@ -118,8 +122,8 @@ cd frontend
 npm.cmd run dev -- --host localhost --port 5173 --strictPort
 ```
 
-The ignored `frontend/.env` keeps `VITE_API_BASE_URL=/api/v1` and
-`VITE_API_PROXY_TARGET=http://localhost:8080` for local development.
+The frontend reads `VITE_API_BASE_URL`, `VITE_API_PROXY_TARGET`, `VITE_DEV_HOST`, and
+`VITE_DEV_PORT` from the same root `.env`.
 
 ## Normal release workflow
 

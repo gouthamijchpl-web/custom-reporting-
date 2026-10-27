@@ -33,6 +33,16 @@ build toolchain for the TypeScript frontend; it serves no application code.
 Requires **JDK 21+** and **Node.js 20+**. Maven is not needed â€” the repository ships the
 Maven wrapper.
 
+Create the shared local environment file once from the repository root:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The ignored root `.env` contains the database, backend, and frontend settings used by
+both applications. Edit that file when a local URL, port, credential, or datasource
+changes.
+
 ### 1. Backend â€” <http://localhost:8080>
 
 ```bash
@@ -40,8 +50,8 @@ cd backend
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-Starts on the `dev` profile. Set `SUPABASE_DB_URL`, `SUPABASE_DB_USERNAME`, and
-`SUPABASE_DB_PASSWORD` in the terminal before starting the backend.
+Starts on the `dev` profile and automatically imports `../.env`. The checked-in example
+uses a file-backed H2 database at `backend/data/customreporting`.
 
 - API docs: <http://localhost:8080/swagger-ui.html>
 
@@ -60,7 +70,8 @@ npm run dev
 ```
 
 The dev server proxies `/api` to the backend, so the browser sees a single origin and the
-httpOnly refresh cookie behaves exactly as it does in production.
+httpOnly refresh cookie behaves exactly as it does in production. Vite also reads its
+`VITE_*` settings from the repository-root `.env`.
 
 Open <http://localhost:5173>, choose **Sign Up**, create an account, then sign in.
 

@@ -1,15 +1,15 @@
 .app-header {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-sidebar);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  height: var(--topbar-height);
-  padding: 0 var(--space-4);
-  background: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(249, 115, 22, 0.14);
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.045);
-  backdrop-filter: blur(22px) saturate(125%);
+  gap: var(--space-6);
+  height: 66px;
+  padding: 0 28px;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid #e8ebf1;
+  box-shadow: 0 2px 10px rgba(26, 39, 68, 0.035);
+  backdrop-filter: blur(18px) saturate(120%);
   flex-shrink: 0;
 }
 
@@ -35,41 +35,206 @@
 .app-header__brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  flex-shrink: 0;
   min-width: 0;
   color: var(--accent-solid);
+  text-decoration: none;
+}
+
+.app-header__brand:hover {
+  color: var(--accent-solid);
+  text-decoration: none;
 }
 
 .app-header__brand-name {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: var(--weight-bold);
+  color: #14213d;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.app-header__nav {
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+
+.app-header__nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px;
+  color: #41506d;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.app-header__nav-link::after {
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  height: 3px;
+  content: '';
+  background: var(--accent-solid);
+  border-radius: var(--radius-full) var(--radius-full) 0 0;
+  opacity: 0;
+  transform: scaleX(0.6);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.app-header__nav-link:hover {
+  color: #17223b;
+  background: #fffaf6;
+  text-decoration: none;
+}
+
+.app-header__nav-link--active {
+  color: #f05b16;
+  font-weight: var(--weight-semibold);
+}
+
+.app-header__nav-link--active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.app-header__nav-icon {
+  display: inline-flex;
 }
 
 /* Pushed to the far right on every screen size. */
 .app-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
   min-width: 0;
   margin-left: auto;
 }
 
-.app-header__avatar {
+.app-header__account {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.app-header__avatar,
+.app-header__account-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   color: #ffffff;
   background-color: var(--accent-solid);
   border-radius: var(--radius-full);
+}
+
+.app-header__avatar {
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.app-header__avatar:hover {
+  background-color: var(--accent-solid-hover);
+}
+
+.app-header__avatar:active {
+  transform: scale(0.96);
+}
+
+.app-header__avatar:focus-visible,
+.app-header__avatar[aria-expanded='true'] {
+  box-shadow: var(--shadow-focus);
+}
+
+.app-header__account-popover {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  width: max-content;
+  min-width: 250px;
+  max-width: min(320px, calc(100vw - var(--space-6)));
+  padding: var(--space-3);
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: account-popover-in var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-header__account-avatar {
+  width: 36px;
+  height: 36px;
+  color: #ffffff;
+}
+
+.app-header__account-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: var(--leading-normal);
+}
+
+.app-header__account-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: calc(100% + var(--space-6));
+  margin: var(--space-1) calc(var(--space-3) * -1) calc(var(--space-3) * -1);
+  padding: 10px var(--space-3);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  text-align: left;
+}
+
+.app-header__account-logout:hover {
+  color: var(--danger-text);
+  background: var(--danger-surface);
+}
+
+.app-header__account-text strong,
+.app-header__account-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header__account-text strong {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.app-header__account-text span {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+@keyframes account-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 }
 
 @media (max-width: 479px) {
@@ -85,4 +250,20 @@
   .app-header__actions {
     gap: var(--space-2);
   }
+}
+
+@media (min-width: 768px) and (max-width: 1220px) {
+  .app-header { gap: var(--space-3); padding: 0 var(--space-4); }
+  .app-header__brand-name { display: none; }
+  .app-header__nav-link { padding: 0 10px; }
+  .app-header__nav-label { display: none; }
+}
+
+@media (max-width: 767px) {
+  .app-header { gap: var(--space-3); height: 60px; padding: 0 var(--space-3); }
+  .app-header__brand { gap: var(--space-2); }
+  .app-header__brand svg { width: 32px; height: 32px; }
+  .app-header__brand-name { display: none; }
+  .app-header__actions .branch-switcher { display: none; }
+  .app-header__actions { gap: var(--space-2); }
 }

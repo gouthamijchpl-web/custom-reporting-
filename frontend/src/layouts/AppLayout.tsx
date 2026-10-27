@@ -9,18 +9,14 @@ import './AppLayout.css';
 /**
  * Shell shared by every authenticated screen.
  *
- * Three layouts, one component: a fixed rail on desktop, an icon rail on tablet, and a
- * slide-over drawer on mobile. The active module renders through the {@link Outlet}, so
- * navigation never remounts the shell and the sidebar stays consistent everywhere.
+ * A horizontal product header is used on larger screens and a slide-over navigation
+ * drawer on mobile. The active module renders through the {@link Outlet}.
  */
 export function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
 
   const isMobile = useMediaQuery(Breakpoint.mobile);
-  const isTablet = useMediaQuery(Breakpoint.tablet);
-
-  const [isCollapsePreferred, setIsCollapsePreferred] = useState(false);
   const [drawerRoute, setDrawerRoute] = useState<string | null>(null);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -30,9 +26,6 @@ export function AppLayout() {
     document.body.classList.add('app-theme-bright');
     return () => document.body.classList.remove('app-theme-bright');
   }, []);
-
-  // Tablets always use the icon rail; on desktop the user's own choice applies.
-  const isCollapsed = isTablet || isCollapsePreferred;
 
   /**
    * The drawer is remembered per route rather than as a plain boolean, so any navigation
@@ -71,20 +64,6 @@ export function AppLayout() {
   return (
     <div className="app-frame">
       <div className="app-layout">
-      {!isMobile && (
-        <div className="app-layout__rail">
-          <Sidebar
-            user={user}
-            isCollapsed={isCollapsed}
-            isDrawer={false}
-            onToggleCollapse={() => setIsCollapsePreferred((current) => !current)}
-            onCloseDrawer={closeDrawer}
-            onNavigate={closeDrawer}
-            onRequestLogout={() => setIsLogoutDialogOpen(true)}
-          />
-        </div>
-      )}
-
       {isMobile && isDrawerOpen && (
         <div className="app-layout__drawer-scrim" onClick={closeDrawer} role="presentation">
           <div
@@ -95,7 +74,6 @@ export function AppLayout() {
             onClick={(event) => event.stopPropagation()}
           >
             <Sidebar
-              user={user}
               isCollapsed={false}
               isDrawer
               onToggleCollapse={closeDrawer}
@@ -115,6 +93,7 @@ export function AppLayout() {
           user={user}
           isCompact={isMobile}
           onOpenNavigation={() => setDrawerRoute(location.pathname)}
+          onRequestLogout={() => setIsLogoutDialogOpen(true)}
         />
 
         <main className="app-layout__content" id="main-content">

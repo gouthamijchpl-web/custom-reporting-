@@ -2,12 +2,9 @@ import { NavLink } from 'react-router-dom';
 import { PRIMARY_NAVIGATION, SETTINGS_NAVIGATION, type NavigationItem } from '@/app/navigation';
 import { BrandLogo, ChevronLeftIcon, ChevronRightIcon, CloseIcon, LogoutIcon } from '@/components/icons';
 import { cx } from '@/utils/classNames';
-import { toInitials } from '@/utils/formatters';
-import type { AuthenticatedUser } from '@/types';
 import './Sidebar.css';
 
 interface SidebarProps {
-  user: AuthenticatedUser;
   /** Icon-only mode, used on tablet and when the user collapses the rail. */
   isCollapsed: boolean;
   /** True when rendered inside the mobile drawer rather than as a fixed rail. */
@@ -24,11 +21,9 @@ interface SidebarProps {
  *
  * The same component serves the fixed desktop rail and the mobile drawer; only the
  * surrounding chrome differs. Ordering is fixed by design: Workspace, Data Upload and
- * Reports at the top, then flexible space, then Settings and the profile block pinned to
- * the bottom.
+ * Reports at the top, then flexible space, with Settings and logout pinned to the bottom.
  */
 export function Sidebar({
-  user,
   isCollapsed,
   isDrawer,
   onToggleCollapse,
@@ -109,22 +104,6 @@ export function Sidebar({
         <ul className="sidebar__list">
           <SidebarLink item={SETTINGS_NAVIGATION} showLabel={showLabels} onNavigate={onNavigate} />
         </ul>
-
-        <div className="sidebar__profile">
-          <span className="sidebar__avatar" aria-hidden="true">
-            {toInitials(user.fullName)}
-          </span>
-          {showLabels && (
-            <span className="sidebar__profile-text">
-              <span className="sidebar__profile-name" title={user.fullName}>
-                {user.fullName}
-              </span>
-              <span className="sidebar__profile-email" title={user.email}>
-                {user.email}
-              </span>
-            </span>
-          )}
-        </div>
 
         <button
           type="button"

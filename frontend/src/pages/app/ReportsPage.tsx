@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import type { KeyboardEvent } from 'react';
 import {
   AnalyticsIcon,
@@ -11,10 +11,11 @@ import {
   InventoryClockIcon,
   ProfitIcon,
   ReportsIcon,
+  SearchIcon,
   ShieldIcon,
   UsersIcon,
 } from '@/components/icons';
-import { AnimatedTabIndicator, Badge, PageHeader } from '@/components/ui';
+import { Badge } from '@/components/ui';
 import { DailySalesCategoryDashboard } from '@/features/reports/DailySalesCategoryDashboard';
 import { DailySalesStyleDashboard } from '@/features/reports/DailySalesStyleDashboard';
 import { MonthlyCategoryDashboard } from '@/features/reports/MonthlyCategoryDashboard';
@@ -82,7 +83,10 @@ export function ReportsPage() {
   const [storedPhase, setActivePhase] = useCloudPreference<ReportPhase>('reports.active-phase', 'phase-1');
   const activePhase: ReportPhase = storedPhase === 'phase-2' ? 'phase-2' : 'phase-1';
   const [selectedReportId, setSelectedReportId] = useCloudPreference<string | null>('reports.selected-report', null);
+  const [query, setQuery] = useState('');
+  const [isCatalogCollapsed, setIsCatalogCollapsed] = useState(false);
   const [isNavigationPending, startNavigation] = useTransition();
+  const reportContentRef = useRef<HTMLElement>(null);
   const scopeId = selectedEntity && branchStatus === 'ready'
     ? selectableBranches.length === 0 ? selectedEntity.id : selectedBranch ? `${selectedEntity.id}:branch:${selectedBranch.id}` : null
     : null;
@@ -95,11 +99,20 @@ export function ReportsPage() {
     return () => window.clearTimeout(timer);
   }, [scopeId, selectedBranch, selectedEntity]);
 
-  const selectedReport = REPORT_MASTER.find((report) => report.id === selectedReportId) ?? null;
-
   const visibleReports = useMemo(() => REPORT_MASTER.filter((report) => (
     report.activeStatus && report.phase === activePhase
   )), [activePhase]);
+
+  const selectedReport = REPORT_MASTER.find((report) => (
+    report.id === selectedReportId && report.phase === activePhase
+  )) ?? visibleReports[0] ?? null;
+
+  const filteredReports = useMemo(() => {
+    const term = query.trim().toLocaleLowerCase();
+    return term.length === 0
+      ? visibleReports
+      : visibleReports.filter((report) => report.reportName.toLocaleLowerCase().includes(term));
+  }, [query, visibleReports]);
 
   const phaseCounts = useMemo(() => ({
     'phase-1': REPORT_MASTER.filter((report) => report.activeStatus && report.phase === 'phase-1').length,
@@ -115,58 +128,75 @@ export function ReportsPage() {
     if (event.key === 'Home') nextIndex = 0;
     if (event.key === 'End') nextIndex = REPORT_PHASES.length - 1;
     const nextPhase = REPORT_PHASES[nextIndex];
-    startNavigation(() => setActivePhase(nextPhase));
+    const firstReport = REPORT_MASTER.find((report) => report.activeStatus && report.phase === nextPhase);
+    startNavigation(() => {
+      setActivePhase(nextPhase);
+      setSelectedReportId(firstReport?.id ?? null);
+    });
     document.getElementById(`${nextPhase}-tab`)?.focus();
   };
 
-  if (selectedReport) {
-    return <div className="reports-page reports-page--detail" aria-busy={isNavigationPending}>
-      <button type="button" className="reports-back" onClick={() => startNavigation(() => setSelectedReportId(null))}><ChevronLeftIcon size={16} />Back to Reports</button>
-      <PageHeader
-        title={selectedReport.reportName}
-        actions={<Badge tone="accent" className="report-detail__phase-badge">{phaseLabel(selectedReport.phase)}</Badge>}
-      />
-      {selectedReport.id === 'daily-sales-category' && <DailySalesCategoryDashboard />}
-      {selectedReport.id === 'daily-sales-style' && <DailySalesStyleDashboard />}
-      {selectedReport.id === 'style-sales-purchase' && <StyleSalesPurchaseAnalysisDashboard />}
-      {selectedReport.id === 'monthly-category' && <MonthlyCategoryDashboard />}
-      {selectedReport.id === 'sku-profitability' && <SkuProfitabilityDashboard />}
-      {selectedReport.id === 'stock-ageing' && <StockAgeingDashboard />}
-      {selectedReport.id === 'mis-cogs' && <MisCogsDashboard />}
-    </div>;
-  }
+  const choosePhase = (phase: ReportPhase) => {
+    const firstReport = REPORT_MASTER.find((report) => report.activeStatus && report.phase === phase);
+    startNavigation(() => {
+      setActivePhase(phase);
+      setSelectedReportId(firstReport?.id ?? null);
+      setQuery('');
+    });
+  };
 
-  return <div className="reports-page" aria-busy={isNavigationPending}>
-    <PageHeader title="Reports" description="View and manage reports by category." />
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+      return;
+    }
+    void reportContentRef.current?.requestFullscreen();
+  };
 
-    <nav className="reports-phase-tabs" role="tablist" aria-label="Report phases">
-      {REPORT_PHASES.map((phase, index) => {
-        const selected = activePhase === phase;
-        return <button
-          key={phase}
-          id={`${phase}-tab`}
-          type="button"
-          role="tab"
-          aria-selected={selected}
-          aria-controls={`${phase}-panel`}
-          tabIndex={selected ? 0 : -1}
-          onClick={() => startNavigation(() => setActivePhase(phase))}
-          onKeyDown={(event) => handlePhaseKeyDown(event, index)}
-        >
-          <span>{phaseLabel(phase)} Reports</span><strong>{phaseCounts[phase]}</strong>
-        </button>;
-      })}
-      <AnimatedTabIndicator activeKey={activePhase} />
-    </nav>
+  return <div className={`reports-page${isCatalogCollapsed ? ' reports-page--catalog-collapsed' : ''}`} aria-busy={isNavigationPending}>
+    <aside className="reports-catalog" aria-label="Report browser">
+      <div className="reports-catalog__header">
+        <div><h1>Reports</h1><p>Browse and preview your reports</p></div>
+        <button type="button" className="reports-catalog__collapse" onClick={() => setIsCatalogCollapsed((current) => !current)} aria-label={isCatalogCollapsed ? 'Expand report browser' : 'Collapse report browser'}>
+          {isCatalogCollapsed ? <ChevronRightIcon size={16} /> : <ChevronLeftIcon size={16} />}
+        </button>
+      </div>
 
-    <section id={`${activePhase}-panel`} className="report-phase" role="tabpanel" aria-labelledby={`${activePhase}-tab`}>
-      <div className="report-card-grid">{visibleReports.map((report) => {
+      <div className="reports-catalog__body">
+        <nav className="reports-phase-tabs" role="tablist" aria-label="Report phases">
+          {REPORT_PHASES.map((phase, index) => {
+            const selected = activePhase === phase;
+            return <button
+              key={phase}
+              id={`${phase}-tab`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`${phase}-panel`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => choosePhase(phase)}
+              onKeyDown={(event) => handlePhaseKeyDown(event, index)}
+            >
+              <span>{phaseBadgeLabel(phase)}</span><strong>{'\u00B7'} {phaseCounts[phase]}</strong>
+            </button>;
+          })}
+        </nav>
+
+        <label className="reports-search" htmlFor="reports-search-input">
+          <SearchIcon size={17} />
+          <input id="reports-search-input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search reports" />
+        </label>
+
+        <section id={`${activePhase}-panel`} className="report-phase" role="tabpanel" aria-labelledby={`${activePhase}-tab`}>
+          <div className="report-card-grid">{filteredReports.map((report) => {
           const ReportIcon = REPORT_ICONS[report.id as keyof typeof REPORT_ICONS] ?? ReportsIcon;
-          return <article className="report-card" key={report.id}>
+          const selected = report.id === selectedReport?.id;
+          return <article className={`report-card${selected ? ' report-card--active' : ''}`} key={report.id}>
             <button
               type="button"
               className="report-card__open"
               aria-label={`Open ${report.reportName}`}
+              aria-current={selected ? 'page' : undefined}
               onClick={() => startNavigation(() => setSelectedReportId(report.id))}
             >
               <span className="report-card__icon"><ReportIcon size={18} /></span>
@@ -174,12 +204,36 @@ export function ReportsPage() {
                 <strong>{report.reportName}</strong>
               </span>
               <span className="report-card__meta">
-                <span className="report-card__phase">{phaseBadgeLabel(report.phase)}</span>
                 <ChevronRightIcon className="report-card__arrow" size={17} />
               </span>
             </button>
           </article>;
-        })}</div>
-    </section>
+          })}</div>
+          {filteredReports.length === 0 && <p className="reports-catalog__empty">No reports match “{query.trim()}”.</p>}
+        </section>
+      </div>
+    </aside>
+
+    <main className="report-detail" ref={reportContentRef}>
+      {selectedReport ? <>
+        <header className="report-detail__header">
+          <h1>{selectedReport.reportName}</h1>
+          <div className="report-detail__header-actions">
+            <Badge tone="accent" className="report-detail__phase-badge">{phaseLabel(selectedReport.phase)}</Badge>
+            <button type="button" className="report-detail__fullscreen" onClick={toggleFullscreen} aria-label="View report full screen">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /><path d="m3 8 6-6M21 8l-6-6M3 16l6 6M21 16l-6 6" /></svg>
+            </button>
+          </div>
+        </header>
+        {selectedReport.id === 'daily-sales-category' && <DailySalesCategoryDashboard />}
+        {selectedReport.id === 'daily-sales-style' && <DailySalesStyleDashboard />}
+        {selectedReport.id === 'style-sales-purchase' && <StyleSalesPurchaseAnalysisDashboard />}
+        {selectedReport.id === 'monthly-category' && <MonthlyCategoryDashboard />}
+        {selectedReport.id === 'sku-profitability' && <SkuProfitabilityDashboard />}
+        {selectedReport.id === 'stock-ageing' && <StockAgeingDashboard />}
+        {selectedReport.id === 'mis-cogs' && <MisCogsDashboard />}
+        {selectedReport.phase === 'phase-2' && <div className="reports-empty"><span><ReportsIcon size={24} /></span><h2>{selectedReport.reportName}</h2><p>This report is ready for its Phase 2 data source.</p></div>}
+      </> : <div className="reports-empty"><span><ReportsIcon size={24} /></span><h2>No report selected</h2><p>Choose a report from the browser.</p></div>}
+    </main>
   </div>;
 }

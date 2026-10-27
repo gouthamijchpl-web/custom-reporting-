@@ -1,8 +1,8 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 import { uploadApi } from '@/api';
-import { PlusIcon, SearchIcon, UploadIcon } from '@/components/icons';
-import { AnimatedTabIndicator, Badge, Button, Modal, PageHeader, TextInput } from '@/components/ui';
+import { ChevronDownIcon, DownloadIcon, PlusIcon, SearchIcon, UploadIcon } from '@/components/icons';
+import { AnimatedTabIndicator, Badge, Button, Modal, TextInput } from '@/components/ui';
 import {
   analyzeImportFile, CURRENT_NORMALIZATION_VERSION, markFileDuplicates, migrateLegacyImportFile, remapImportFile,
 } from '@/features/uploads/inventoryImport';
@@ -191,6 +191,16 @@ function UploadSelectorIcon({ type }: { type: VisibleType }) {
   </svg>;
 }
 
+function PreviewToolIcon({ type }: { type: 'filter' | 'columns' }) {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    {type === 'filter' ? <path d="M4 5h16l-6.2 7.1v5.4l-3.6 1.8v-7.2L4 5Z" /> : <>
+      <rect x="4" y="4" width="4" height="16" rx="1" />
+      <rect x="10" y="4" width="4" height="16" rx="1" />
+      <rect x="16" y="4" width="4" height="16" rx="1" />
+    </>}
+  </svg>;
+}
+
 function UploadedDataTable({ file, title }: { file: ImportedInventoryFile; title: string }) {
   const [query, setQuery] = useState('');
   const [columnQuery, setColumnQuery] = useState('');
@@ -236,9 +246,16 @@ function UploadedDataTable({ file, title }: { file: ImportedInventoryFile; title
       <div className="upload-preview__badges"><Badge tone={statusTone(file.duplicateStatus)}>{file.duplicateStatus}</Badge><Badge tone="neutral" className="upload-preview__row-count-badge">{resultLabel}</Badge></div>
     </header>
     <div className="upload-preview__search">
-      <TextInput id={`upload-table-search-${file.id}`} type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search rows" aria-label={`Search rows in ${title}`} />
-      <TextInput id={`upload-column-search-${file.id}`} type="search" value={columnQuery} onChange={(event) => setColumnQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search column names" aria-label={`Search column names in ${title}`} />
-      {columnResultLabel && <span className={cx('upload-preview__column-result', matchingColumnIndices.size === 0 && 'upload-preview__column-result--empty')} aria-live="polite">{columnResultLabel}</span>}
+      <div className="upload-preview__search-fields">
+        <TextInput id={`upload-table-search-${file.id}`} type="search" value={query} onChange={(event) => setQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search rows" aria-label={`Search rows in ${title}`} />
+        <TextInput id={`upload-column-search-${file.id}`} type="search" value={columnQuery} onChange={(event) => setColumnQuery(event.target.value)} leadingIcon={<SearchIcon size={16} />} placeholder="Search column names" aria-label={`Search column names in ${title}`} />
+        {columnResultLabel && <span className={cx('upload-preview__column-result', matchingColumnIndices.size === 0 && 'upload-preview__column-result--empty')} aria-live="polite">{columnResultLabel}</span>}
+      </div>
+      <div className="upload-preview__tools" aria-label="Table tools">
+        <button type="button" className="upload-preview__tool-button" onClick={() => document.getElementById(`upload-table-search-${file.id}`)?.focus()}><PreviewToolIcon type="filter" /><span>Filter</span><ChevronDownIcon size={14} /></button>
+        <button type="button" className="upload-preview__tool-button" onClick={() => document.getElementById(`upload-column-search-${file.id}`)?.focus()}><PreviewToolIcon type="columns" /><span>Columns</span><ChevronDownIcon size={14} /></button>
+        <button type="button" className="upload-preview__tool-button" onClick={() => { void downloadUploadedFile(file); }}><DownloadIcon size={16} /><span>Export</span><ChevronDownIcon size={14} /></button>
+      </div>
     </div>
     <div className="upload-preview__table-wrap"><table className="upload-preview__table">
       <thead><tr><th className="upload-preview__row-number">#</th>{file.headers.map((header, index) => <th ref={(element) => { columnHeaderRefs.current[index] = element; }} className={cx(importedColumnClass(header), matchingColumnIndices.has(index) && 'upload-preview__column-match')} key={`${header}-${index}`}>{header}</th>)}</tr></thead>
@@ -373,11 +390,15 @@ export function DataUploadPage() {
   };
 
   return <div className="data-upload-page">
-    <PageHeader title="Data Upload" />
+    <div className="data-upload-page__heading">
+      <h1>Data Upload</h1>
+      <span className="data-upload-page__heading-divider" aria-hidden="true" />
+      <div className="data-upload-actions" role="tablist" aria-label="Choose data upload type">{SELECTOR_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`data-upload-selector-${item.id}`} aria-selected={visibleType === item.id} tabIndex={visibleType === item.id ? 0 : -1} className={cx('data-upload-actions__tab', visibleType === item.id && 'data-upload-actions__tab--active')} onClick={() => setVisibleType(item.id)} onKeyDown={(event) => handleSelectorKeyDown(event, index)} disabled={!selectedEntity || storageLoading}><UploadSelectorIcon type={item.id} /><span>{item.label}</span></button>)}</div>
+      {visibleType !== 'gross-profit' && <Button className="data-upload-page__create" size="sm" leadingIcon={<PlusIcon size={17} />} onClick={() => openCreate(visibleType)} disabled={!selectedEntity || storageLoading}>{visibleType === 'opening-stock' ? 'Upload file' : 'Create'}</Button>}
+    </div>
     {!selectedEntity && <div className="data-upload-page__notice" role="status">Select an active entity from the header before uploading a file.</div>}
     {selectedEntity && branchStatus === 'error' && <div className="data-upload-page__notice" role="alert">{branchErrorMessage ?? 'Branches could not be loaded. Open the Branch selector to retry.'}</div>}
     {storageError && <div className="data-upload-page__notice" role="alert">{storageError}</div>}
-    <div className="data-upload-controls"><div className="data-upload-actions" role="tablist" aria-label="Choose data upload type">{SELECTOR_TYPES.map((item, index) => <button key={item.id} type="button" role="tab" id={`data-upload-selector-${item.id}`} aria-selected={visibleType === item.id} tabIndex={visibleType === item.id ? 0 : -1} className={cx('data-upload-actions__tab', visibleType === item.id && 'data-upload-actions__tab--active')} onClick={() => setVisibleType(item.id)} onKeyDown={(event) => handleSelectorKeyDown(event, index)} disabled={!selectedEntity || storageLoading}><UploadSelectorIcon type={item.id} /><span>{item.label}</span></button>)}<AnimatedTabIndicator activeKey={visibleType} /></div>{visibleType !== 'gross-profit' && <Button size="sm" leadingIcon={visibleType === 'opening-stock' ? <UploadIcon size={16} /> : <PlusIcon size={16} />} onClick={() => openCreate(visibleType)} disabled={!selectedEntity || storageLoading}>{visibleType === 'opening-stock' ? 'Upload file' : 'Create'}</Button>}</div>
     {selectedEntity && branchStatus !== 'error' && (storageLoading ? <div className="data-upload-result__empty" role="status">{branchStatus === 'loading' ? 'Loading client branches…' : 'Restoring uploaded files…'}</div>
       : visibleType === 'gross-profit' ? <GrossProfitTable entityId={selectedEntity.id} uploadsByType={currentScopeUploads} />
       : visibleUploads.length > 0 ? <div className="data-upload-result">{visibleUploads.map((file) => <UploadedDataTable key={file.id} file={file} title={`${getUploadType(visibleType).label} data`} />)}</div>

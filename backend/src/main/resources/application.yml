@@ -1,6 +1,10 @@
 # Shared configuration. Environment specific overrides live in application-dev.yml and
 # application-prod.yml; secrets are supplied through environment variables only.
 spring:
+  config:
+    # Local runs start from backend/, so the repository-root .env is one level up.
+    # Production continues to use real process environment variables; this import is optional.
+    import: optional:file:../.env[.properties]
   application:
     name: custom-reporting-backend
   profiles:
